@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登録完了</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 760px; margin: 40px auto; padding: 24px; }
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.08); padding: 24px; }
+    h1 { margin-top: 0; }
+    .secondary { display: inline-block; margin-top: 20px; border-radius: 999px; padding: 12px 20px; text-decoration: none; border: 1px solid #d1d5db; color: #111827; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>登録完了</h1>
+    <p><strong th:text="${salesName}"></strong> を登録しました。</p>
+    <p>登録ID: <span th:text="${productId}"></span></p>
+    <a class="secondary" th:href="@{/kampo/import}">続けて別のPDFを読み込む</a>
+  </div>
+</main>
+</body>
+</html>

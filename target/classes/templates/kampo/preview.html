@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>取込内容確認</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 1100px; margin: 40px auto; padding: 24px; }
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.08); padding: 24px; }
+    h1, h2 { margin-top: 0; }
+    .meta { display: grid; grid-template-columns: 180px 1fr; gap: 12px 16px; }
+    .label { color: #6b7280; }
+    .value { font-weight: 600; word-break: break-word; }
+    .section { margin-top: 28px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+    .actions { margin-top: 24px; display: flex; gap: 12px; }
+    .primary { background: #111827; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; cursor: pointer; }
+    .secondary { display: inline-block; border-radius: 999px; padding: 12px 20px; text-decoration: none; border: 1px solid #d1d5db; color: #111827; }
+    .note { color: #6b7280; }
+    .tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 12px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card" th:object="${draft}">
+    <h1>抽出内容の確認</h1>
+    <p class="note">内容を確認して問題なければ登録してください。</p>
+
+    <div class="meta">
+      <div class="label">元ファイル名</div>
+      <div class="value" th:text="*{sourceFileName}"></div>
+      <div class="label">文書番号</div>
+      <div class="value" th:text="*{sourceDocumentNo}"></div>
+      <div class="label">識別コード</div>
+      <div class="value" th:text="*{identificationCode}"></div>
+      <div class="label">販売名</div>
+      <div class="value" th:text="*{salesName}"></div>
+    </div>
+
+    <div class="section">
+      <h2>効能又は効果</h2>
+      <div class="tag">前段</div>
+      <p th:text="*{efficacyConditionText}"></p>
+      <div class="tag">摘要</div>
+      <p th:text="*{efficacyIndicationText}"></p>
+    </div>
+
+    <div class="section">
+      <h2>用法及び用量</h2>
+      <div class="tag">1日量</div>
+      <p><span th:text="*{dosageDailyAmount}"></span></p>
+      <div class="tag">用法</div>
+      <p th:text="*{dosageInstructionsText}"></p>
+    </div>
+
+    <div class="section">
+      <h2>有効成分</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>順序</th>
+          <th>有効成分名</th>
+          <th>配合量</th>
+          <th>単位</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="ingredient : *{ingredients}">
+          <td th:text="${ingredient.sortOrder}"></td>
+          <td th:text="${ingredient.ingredientName}"></td>
+          <td th:text="${ingredient.amountValue}"></td>
+          <td th:text="${ingredient.amountUnit}"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <form class="actions" method="post" th:action="@{/kampo/import/save}" th:object="${draft}">
+      <button class="primary" type="submit">この内容で登録する</button>
+      <a class="secondary" th:href="@{/kampo/import}">別のPDFを読み込む</a>
+    </form>
+  </div>
+</main>
+</body>
+</html>
