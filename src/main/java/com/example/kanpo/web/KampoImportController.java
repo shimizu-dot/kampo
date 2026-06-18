@@ -35,6 +35,11 @@ public class KampoImportController {
 		this.importService = importService;
 	}
 
+	@ModelAttribute("draft")
+	public KampoImportDraft draft() {
+		return new KampoImportDraft();
+	}
+
 	@GetMapping
 	public String uploadForm(Model model) {
 		model.addAttribute("activeTab", "import");
@@ -87,6 +92,9 @@ public class KampoImportController {
 
 	private String buildSaveErrorMessage(Exception exception) {
 		Throwable rootCause = getRootCause(exception);
+		if (rootCause instanceof IllegalArgumentException illegalArgumentException) {
+			return illegalArgumentException.getMessage();
+		}
 		if (rootCause instanceof CannotGetJdbcConnectionException) {
 			return "PostgreSQL に接続できませんでした。DB が起動しているか、接続先設定が正しいか確認してください。";
 		}

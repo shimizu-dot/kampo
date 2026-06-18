@@ -89,17 +89,16 @@ public class KampoSearchController {
 			if ("INGREDIENT_NAME".equals(queryType)) {
 				products = searchService.searchByIngredientName(keyword);
 				modeLabel = "成分「" + keyword + "」";
-				model.addAttribute("highlightQuery", keyword);
 			} else if ("SUMMARY_TEXT".equals(queryType)) {
 				products = searchService.searchBySummaryText(keyword);
 				modeLabel = "摘要「" + keyword + "」";
 			} else {
 				products = searchService.searchByIdentificationCode(keyword);
 				modeLabel = "コード「" + keyword + "」";
-				model.addAttribute("highlightQuery", keyword);
 			}
+			model.addAttribute("highlightQuery", keyword);
 
-			products = decorateProducts(products, model.getAttribute("highlightQuery") instanceof String q ? q : "");
+			products = decorateProducts(products, keyword);
 			model.addAttribute("searched", true);
 			model.addAttribute("products", products);
 			model.addAttribute("resultCount", products.size());
@@ -233,6 +232,9 @@ public class KampoSearchController {
 
 	private String buildUpdateErrorMessage(Exception exception) {
 		Throwable rootCause = getRootCause(exception);
+		if (rootCause instanceof IllegalArgumentException illegalArgumentException) {
+			return illegalArgumentException.getMessage();
+		}
 		if (rootCause instanceof CannotGetJdbcConnectionException) {
 			return "PostgreSQL に接続できませんでした。DB が起動しているか、接続先設定が正しいか確認してください。";
 		}

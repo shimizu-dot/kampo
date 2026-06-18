@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,36 +21,79 @@ import org.apache.pdfbox.text.PDFTextStripper;
 @Component
 public class KampoPdfParser {
 
+	private static final Logger log = LoggerFactory.getLogger(KampoPdfParser.class);
 	private static final Pattern SALES_NAME_PATTERN = Pattern.compile("^販売名\\s+(.+)$");
+	private static final Pattern READING_PATTERN = Pattern.compile("^[ァ-ヶー\\s\\u3000]+$");
 	private static final Pattern DOCUMENT_NO_PATTERN = Pattern.compile("No\\.?(\\d+)");
 	private static final Pattern IDENTIFICATION_CODE_PATTERN = Pattern.compile("識別コード\\s*(?:.+?／\\s*)?(\\d+)");
 	private static final Pattern INGREDIENT_PATTERN = Pattern.compile("(?:日局)?([^\\s0-9]+)\\s+([0-9]+(?:\\.[0-9]+)?)\\s*[gｇ]");
 	private static final Pattern DOSAGE_PATTERN = Pattern.compile("1日([0-9]+(?:\\.[0-9]+)?)gを(.+?)する(?:。|$)");
 	private static final Pattern EFFICACY_PATTERN = Pattern.compile("^(.*?)(?:を伴う)?次の諸症[:：](.+)$");
+	private static final Pattern EFFICACY_START_PATTERN = Pattern.compile("(?m)^\\s*4\\s*[\\.．]?\\s*効能又は効果");
+	private static final Pattern EFFICACY_END_PATTERN = Pattern.compile("(?m)^\\s*6\\s*[\\.．]?\\s*用法及び用量");
+	private static final Pattern DOSAGE_START_PATTERN = Pattern.compile("(?m)^\\s*6\\s*[\\.．]?\\s*用法及び用量");
+	private static final Pattern DOSAGE_END_PATTERN = Pattern.compile("(?m)^\\s*8\\s*[\\.．]?\\s*重要な基本的注意");
 
 	public KampoImportDraft parse(MultipartFile file) {
 		if (file == null || file.isEmpty()) {
 			throw new KampoPdfImportException("PDFファイルが選択されていません。");
 		}
 
-		String text = extractText(file);
-		List<String> lines = splitLines(text);
-		KampoImportDraft draft = new KampoImportDraft();
-		draft.setSourceFileName(Objects.requireNonNullElse(file.getOriginalFilename(), ""));
-		draft.setSourceDocumentNo(findDocumentNo(text));
-		draft.setIdentificationCode(findIdentificationCode(text));
-		draft.setSalesName(findSalesName(lines));
-		fillComposition(lines, draft);
-		fillEfficacy(text, draft);
-		fillDosage(text, draft);
-		validate(draft);
-		return draft;
+		String fileName = Objects.requireNonNullElse(file.getOriginalFilename(), "");
+		log.info("PDF parse started: fileName={}, size={}", fileName, file.getSize());
+		try {
+			log.debug("step=extractText(raw)");
+			String text = extractText(file, false);
+			log.debug("step=extractText(raw), length={}", text.length());
+
+			log.debug("step=extractText(sorted)");
+			String sortedText = extractText(file, true);
+			log.debug("step=extractText(sorted), length={}", sortedText.length());
+
+			List<String> lines = splitLines(text);
+			List<String> sortedLines = splitLines(sortedText);
+			log.debug("step=splitLines, rawLines={}, sortedLines={}", lines.size(), sortedLines.size());
+
+			KampoImportDraft draft = new KampoImportDraft();
+			draft.setSourceFileName(fileName);
+
+			log.debug("step=findDocumentNo");
+			draft.setSourceDocumentNo(findDocumentNo(text));
+
+			log.debug("step=findIdentificationCode");
+			draft.setIdentificationCode(findIdentificationCode(text));
+
+			log.debug("step=findSalesName");
+			int salesNameLineIndex = findSalesNameLineIndex(lines);
+			draft.setSalesName(salesNameLineIndex >= 0 ? normalizeSalesName(extractSalesName(lines.get(salesNameLineIndex))) : findSalesName(lines));
+
+			log.debug("step=findReading");
+			draft.setReading(findReading(lines, sortedLines, salesNameLineIndex));
+
+			log.debug("step=fillComposition");
+			fillComposition(lines, draft);
+
+			log.debug("step=fillEfficacy");
+			fillEfficacy(text, sortedText, lines, sortedLines, draft);
+
+			log.debug("step=fillDosage");
+			fillDosage(text, sortedText, draft);
+
+			log.debug("step=validate");
+			validate(draft);
+
+			log.info("PDF parse completed: fileName={}, identificationCode={}, salesName={}", fileName, draft.getIdentificationCode(), draft.getSalesName());
+			return draft;
+		} catch (RuntimeException exception) {
+			log.error("PDF parse failed: fileName={}, message={}", fileName, exception.getMessage(), exception);
+			throw exception;
+		}
 	}
 
-	private String extractText(MultipartFile file) {
+	private String extractText(MultipartFile file, boolean sortByPosition) {
 		try (InputStream inputStream = file.getInputStream(); PDDocument document = Loader.loadPDF(inputStream.readAllBytes())) {
 			PDFTextStripper stripper = new PDFTextStripper();
-			stripper.setSortByPosition(false);
+			stripper.setSortByPosition(sortByPosition);
 			return stripper.getText(document);
 		} catch (IOException e) {
 			throw new KampoPdfImportException("PDFの読み取りに失敗しました。", e);
@@ -89,13 +134,30 @@ public class KampoPdfParser {
 	}
 
 	private String findSalesName(List<String> lines) {
-		for (String line : lines) {
-			Matcher matcher = SALES_NAME_PATTERN.matcher(line);
-			if (matcher.find()) {
-				return normalizeSalesName(matcher.group(1));
-			}
+		int salesNameLineIndex = findSalesNameLineIndex(lines);
+		if (salesNameLineIndex >= 0) {
+			return normalizeSalesName(extractSalesName(lines.get(salesNameLineIndex)));
 		}
 		throw new KampoPdfImportException("販売名を抽出できませんでした。");
+	}
+
+	private int findSalesNameLineIndex(List<String> lines) {
+		for (int i = 0; i < lines.size(); i++) {
+			String line = lines.get(i);
+			Matcher matcher = SALES_NAME_PATTERN.matcher(line);
+			if (matcher.find()) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private String extractSalesName(String line) {
+		Matcher matcher = SALES_NAME_PATTERN.matcher(line);
+		if (matcher.find()) {
+			return matcher.group(1);
+		}
+		return "";
 	}
 
 	private String normalizeSalesName(String salesName) {
@@ -105,6 +167,74 @@ public class KampoPdfParser {
 		return salesName
 				.replace("（医療用）", "")
 				.replace("(医療用)", "")
+				.trim();
+	}
+
+	private String findReading(List<String> lines, List<String> sortedLines, int salesNameLineIndex) {
+		String reading = findReadingNearSalesName(lines, salesNameLineIndex);
+		if (!reading.isEmpty()) {
+			return reading;
+		}
+		reading = findReadingNearKanboSeizai(sortedLines);
+		if (!reading.isEmpty()) {
+			return reading;
+		}
+		return findReadingNearKanboSeizai(lines);
+	}
+
+	private String findReadingNearSalesName(List<String> lines, int salesNameLineIndex) {
+		if (salesNameLineIndex < 0 || salesNameLineIndex >= lines.size()) {
+			return "";
+		}
+		for (int i = salesNameLineIndex - 1; i >= Math.max(0, salesNameLineIndex - 3); i--) {
+			String candidate = lines.get(i);
+			if (candidate == null || candidate.isBlank()) {
+				continue;
+			}
+			String normalized = normalizeReading(candidate);
+			if (!normalized.isEmpty() && isReadingLine(candidate)) {
+				log.debug("reading: picked from line above sales name, index={}, value={}", i, normalized);
+				return normalized;
+			}
+		}
+		return "";
+	}
+
+	private String findReadingNearKanboSeizai(List<String> lines) {
+		for (int i = 0; i < lines.size(); i++) {
+			String line = lines.get(i);
+			if (line == null || !line.equals("漢方製剤")) {
+				continue;
+			}
+			for (int j = i + 1; j < Math.min(lines.size(), i + 8); j++) {
+				String candidate = lines.get(j);
+				if (candidate == null || candidate.isBlank()) {
+					continue;
+				}
+				if (candidate.contains("販売名") || candidate.contains("有効成分")) {
+					break;
+				}
+				String normalized = normalizeReading(candidate);
+				if (!normalized.isEmpty() && isReadingLine(candidate)) {
+					log.debug("reading: picked from line after 漢方製剤, index={}, value={}", j, normalized);
+					return normalized;
+				}
+			}
+		}
+		return "";
+	}
+
+	private boolean isReadingLine(String candidate) {
+		return READING_PATTERN.matcher(candidate).matches();
+	}
+
+	private String normalizeReading(String reading) {
+		if (reading == null) {
+			return "";
+		}
+		return reading
+				.replace(" ", "")
+				.replace("　", "")
 				.trim();
 	}
 
@@ -147,15 +277,39 @@ public class KampoPdfParser {
 		draft.setIngredients(ingredients);
 	}
 
-	private void fillEfficacy(String text, KampoImportDraft draft) {
-		Pattern sectionPattern = Pattern.compile("4\\.\\s*効能又は効果([\\s\\S]*?)6\\.\\s*用法及び用量");
-		Matcher sectionMatcher = sectionPattern.matcher(text);
-		if (!sectionMatcher.find()) {
+	private void fillEfficacy(String text, String sortedText, List<String> lines, List<String> sortedLines, KampoImportDraft draft) {
+		String section = extractSection(text, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+		if (section == null) {
+			log.debug("efficacy: raw text section not found, retrying sorted text");
+			section = extractSection(sortedText, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+		}
+		List<String> sectionLines = null;
+		if (section == null) {
+			log.debug("efficacy: text section still missing, retrying line-based extraction");
+			sectionLines = extractSectionLines(lines, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+			if (sectionLines == null) {
+				log.debug("efficacy: raw lines failed, retrying sorted lines");
+				sectionLines = extractSectionLines(sortedLines, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+			}
+			if (sectionLines != null) {
+				section = String.join("\n", sectionLines);
+			}
+		}
+		if (sectionLines == null) {
+			sectionLines = extractSectionLines(lines, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+			if (sectionLines == null) {
+				sectionLines = extractSectionLines(sortedLines, EFFICACY_START_PATTERN, EFFICACY_END_PATTERN);
+			}
+		}
+		if (section == null) {
+			log.debug("efficacy: extraction failed after all fallbacks");
 			throw new KampoPdfImportException("効能又は効果の範囲を抽出できませんでした。");
 		}
-		String section = cleanJapaneseText(sectionMatcher.group(1));
+		log.debug("efficacy: section length={}, lineCount={}", section.length(), sectionLines == null ? 0 : sectionLines.size());
+		section = cleanJapaneseText(section);
 		Matcher matcher = EFFICACY_PATTERN.matcher(section);
 		if (matcher.find()) {
+			log.debug("efficacy: split by EFFICACY_PATTERN");
 			draft.setEfficacyConditionText(cleanJapaneseText(matcher.group(1)));
 			draft.setEfficacyIndicationText(cleanJapaneseText(matcher.group(2)));
 			draft.setEfficacySplitFallback(false);
@@ -166,11 +320,14 @@ public class KampoPdfParser {
 			colonIndex = section.indexOf(':');
 		}
 		if (colonIndex < 0) {
-			draft.setEfficacyConditionText(section);
+			log.debug("efficacy: no colon delimiter, using first body line fallback");
+			String condition = sectionLines == null ? section : findFirstBodyLine(sectionLines);
+			draft.setEfficacyConditionText(cleanJapaneseText(condition));
 			draft.setEfficacyIndicationText("");
 			draft.setEfficacySplitFallback(true);
 			return;
 		}
+		log.debug("efficacy: split by colon");
 		String condition = cleanJapaneseText(section.substring(0, colonIndex));
 		String indication = cleanJapaneseText(section.substring(colonIndex + 1));
 		draft.setEfficacyConditionText(condition);
@@ -178,19 +335,81 @@ public class KampoPdfParser {
 		draft.setEfficacySplitFallback(false);
 	}
 
-	private void fillDosage(String text, KampoImportDraft draft) {
-		Pattern sectionPattern = Pattern.compile("6\\.\\s*用法及び用量([\\s\\S]*?)8\\.\\s*重要な基本的注意");
-		Matcher sectionMatcher = sectionPattern.matcher(text);
-		if (!sectionMatcher.find()) {
+	private void fillDosage(String text, String sortedText, KampoImportDraft draft) {
+		String section = extractSection(text, DOSAGE_START_PATTERN, DOSAGE_END_PATTERN);
+		if (section == null) {
+			section = extractSection(sortedText, DOSAGE_START_PATTERN, DOSAGE_END_PATTERN);
+		}
+		if (section == null) {
 			throw new KampoPdfImportException("用法及び用量の範囲を抽出できませんでした。");
 		}
-		String section = cleanJapaneseText(sectionMatcher.group(1));
+		section = cleanJapaneseText(section);
 		Matcher matcher = DOSAGE_PATTERN.matcher(section);
 		if (!matcher.find()) {
 			throw new KampoPdfImportException("用法及び用量の分割に失敗しました。");
 		}
 		draft.setDosageDailyAmount(new BigDecimal(matcher.group(1)));
 		draft.setDosageInstructionsText(cleanJapaneseText(matcher.group(2)));
+	}
+
+	private String extractSection(String text, Pattern startPattern, Pattern endPattern) {
+		if (text == null || text.isBlank()) {
+			return null;
+		}
+		Matcher startMatcher = startPattern.matcher(text);
+		if (!startMatcher.find()) {
+			return null;
+		}
+		int startIndex = startMatcher.end();
+		Matcher endMatcher = endPattern.matcher(text);
+		if (!endMatcher.find(startIndex)) {
+			return null;
+		}
+		if (endMatcher.start() <= startIndex) {
+			return null;
+		}
+		return text.substring(startIndex, endMatcher.start());
+	}
+
+	private List<String> extractSectionLines(List<String> lines, Pattern startPattern, Pattern endPattern) {
+		if (lines == null || lines.isEmpty()) {
+			return null;
+		}
+		int startIndex = findLineIndex(lines, startPattern, 0);
+		if (startIndex < 0) {
+			return null;
+		}
+		int endIndex = findLineIndex(lines, endPattern, startIndex + 1);
+		if (endIndex < 0 || endIndex <= startIndex) {
+			return null;
+		}
+		return new ArrayList<>(lines.subList(startIndex + 1, endIndex));
+	}
+
+	private int findLineIndex(List<String> lines, Pattern pattern, int fromIndex) {
+		for (int i = Math.max(fromIndex, 0); i < lines.size(); i++) {
+			if (pattern.matcher(lines.get(i)).find()) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private String findFirstBodyLine(List<String> sectionLines) {
+		for (String line : sectionLines) {
+			String trimmed = line == null ? "" : line.trim();
+			if (trimmed.isEmpty()) {
+				continue;
+			}
+			if (trimmed.matches("^\\d+(?:\\.\\d+)*\\s*.*$")) {
+				continue;
+			}
+			if (trimmed.equals("効能又は効果") || trimmed.equals("用法及び用量") || trimmed.equals("重要な基本的注意")) {
+				continue;
+			}
+			return trimmed;
+		}
+		return sectionLines.isEmpty() ? "" : sectionLines.get(0);
 	}
 
 	private String joinWithNewlines(List<String> lines, int startInclusive, int endExclusive) {

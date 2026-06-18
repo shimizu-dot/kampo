@@ -13,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class KampoSearchService {
 
 	private final KampoImportRepository repository;
+	private final KampoInputValidator inputValidator;
 
-	public KampoSearchService(KampoImportRepository repository) {
+	public KampoSearchService(KampoImportRepository repository, KampoInputValidator inputValidator) {
 		this.repository = repository;
+		this.inputValidator = inputValidator;
 	}
 
 	public List<KampoProductView> searchByIdentificationCode(String identificationCode) {
@@ -57,6 +59,8 @@ public class KampoSearchService {
 
 	@Transactional
 	public void updateProduct(KampoProductEditForm form) {
+		inputValidator.validateSalesName(form.getSalesName());
+		inputValidator.validateReading(form.getReading());
 		repository.updateProduct(form);
 	}
 }

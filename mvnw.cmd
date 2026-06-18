@@ -50,6 +50,16 @@ if ($env:MVNW_VERBOSE -eq "true") {
   $VerbosePreference = "Continue"
 }
 
+$wrapperProperties = "$scriptDir/.mvn/wrapper/maven-wrapper.properties"
+if (-not (Test-Path -Path $wrapperProperties -PathType Leaf)) {
+  if (Get-Command mvn -ErrorAction SilentlyContinue) {
+    Write-Output "MVN_CMD=mvn"
+    exit 0
+  }
+
+  Write-Error "Missing $wrapperProperties and mvn is not available on PATH."
+}
+
 # calculate distributionUrl, requires .mvn/wrapper/maven-wrapper.properties
 $distributionUrl = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionUrl
 if (!$distributionUrl) {

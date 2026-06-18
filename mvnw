@@ -107,6 +107,14 @@ trim() {
 
 scriptDir="$(dirname "$0")"
 scriptName="$(basename "$0")"
+wrapperProperties="$scriptDir/.mvn/wrapper/maven-wrapper.properties"
+
+if [ ! -f "$wrapperProperties" ]; then
+  if command -v mvn >/dev/null 2>&1; then
+    exec mvn "$@"
+  fi
+  die "missing $wrapperProperties and mvn is not available in PATH"
+fi
 
 # parse distributionUrl and optional distributionSha256Sum, requires .mvn/wrapper/maven-wrapper.properties
 while IFS="=" read -r key value; do

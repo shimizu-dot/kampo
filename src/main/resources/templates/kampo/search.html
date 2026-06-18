@@ -101,12 +101,19 @@
     }
     .list-table th:nth-child(2),
     .list-table td:nth-child(2) {
-      width: auto;
+      width: 10rem;
+      max-width: 10rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .list-table th:nth-child(3),
     .list-table td:nth-child(3) {
-      width: 14rem;
+      width: 10rem;
+      max-width: 10rem;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-size: 13px;
     }
     .pager {
@@ -233,9 +240,9 @@
             </thead>
             <tbody>
             <tr th:each="product : ${products}">
-              <td th:text="${product.identificationCode}"></td>
-              <td th:text="${product.salesName}"></td>
-              <td th:text="${product.reading}"></td>
+              <td th:utext="${product.highlightedIdentificationCode}"></td>
+              <td th:utext="${product.highlightedSalesName}"></td>
+              <td th:utext="${product.highlightedReading}"></td>
             </tr>
             </tbody>
           </table>
@@ -262,13 +269,13 @@
             <span class="pill" th:text="${modeLabel}"></span>
             <span class="actions">
             <span class="pill" th:text="'ID: ' + ${product.id}"></span>
-            <span class="pill" th:text="'コード: ' + ${product.identificationCode}"></span>
+            <span class="pill" th:utext="'コード: ' + ${product.highlightedIdentificationCode}"></span>
             </span>
           </span>
           <span class="result-summary">
             <span class="summary-item">
               <span class="label">販売名</span>
-              <span class="value" th:text="${product.salesName}"></span>
+              <span class="value" th:utext="${product.highlightedSalesName}"></span>
             </span>
             <span class="summary-item">
               <span class="label">読み方</span>
@@ -283,21 +290,21 @@
           </div>
           <div class="meta">
             <div class="label">販売名</div>
-            <div class="value" th:text="${product.salesName}"></div>
+            <div class="value" th:utext="${product.highlightedSalesName}"></div>
             <div class="label">読み方</div>
             <div class="value" th:utext="${product.highlightedReading}"></div>
             <div class="label">元ファイル名</div>
-            <div class="value" th:text="${product.sourceFileName}"></div>
+            <div class="value" th:utext="${product.highlightedSourceFileName}"></div>
             <div class="label">文書番号</div>
-            <div class="value" th:text="${product.sourceDocumentNo}"></div>
+            <div class="value" th:utext="${product.highlightedSourceDocumentNo}"></div>
           </div>
 
           <div class="section">
             <h2>効能又は効果</h2>
             <div class="pill">前段</div>
-            <p th:text="${product.efficacyConditionText}"></p>
+            <p th:utext="${product.highlightedEfficacyConditionText}"></p>
             <div class="pill">摘要</div>
-            <p th:text="${product.efficacyIndicationText}"></p>
+            <p th:utext="${product.highlightedEfficacyIndicationText}"></p>
           </div>
 
           <div class="section">
@@ -305,7 +312,7 @@
             <div class="pill">1日量</div>
             <p th:text="${product.dosageDailyAmount}"></p>
             <div class="pill">用法</div>
-            <p th:text="${product.dosageInstructionsText}"></p>
+            <p th:utext="${product.highlightedDosageInstructionsText}"></p>
           </div>
 
           <div class="section">
@@ -326,8 +333,8 @@
                   <td th:text="${ingredient.sortOrder}"></td>
                   <td th:utext="${ingredient.highlightedIngredientName}"></td>
                   <td th:text="${ingredient.amountValue}"></td>
-                  <td th:text="${ingredient.amountUnit}"></td>
-                  <td th:text="${ingredient.rawAmountText}"></td>
+                  <td th:utext="${ingredient.highlightedAmountUnit}"></td>
+                  <td th:utext="${ingredient.highlightedRawAmountText}"></td>
                 </tr>
                 </tbody>
               </table>

@@ -1,12 +1,18 @@
 # 漢方PDF取込アプリ マニュアル
 
+##データベース作成
+psql -h localhost -U postgres -d postgres -c "CREATE DATABASE kanpo;"
+
+##スキーマ作成
+psql -h localhost -U postgres -d kanpo -f src/main/resources/schema.sql
+
 ## 起動方法
 
 1. PostgreSQL を起動する
 2. プロジェクト直下で実行する
 
 ```bash
-./mvnw spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
 3. ブラウザで開く
@@ -22,7 +28,7 @@
 例:
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 ```
 
 ## 画面構成
@@ -30,6 +36,7 @@
 ### 取込
 
 - PDF をアップロードして内容を抽出する
+- 読み方は、PDF の `漢方製剤` の直後にあるカタカナ行から抽出し、半角スペースと全角スペースを除去して保存する
 - 抽出後は確認・編集画面に進む
 - 必要に応じて内容を修正して登録する
 

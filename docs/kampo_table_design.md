@@ -32,8 +32,8 @@
 |---|---|---:|---|---|---|
 | `id` | ID | BIGSERIAL | Yes | PK | 主キー |
 | `identification_code` | 識別コード | VARCHAR(50) | Yes |  | PDF内の識別コード。例: `ツムラ／5` の `5` |
-| `sales_name` | 販売名 | VARCHAR(100) | Yes |  | 例: ツムラ安中散エキス顆粒（医療用） |
-| `reading` | 読み方 | VARCHAR(255) | No |  | 販売名の読み。手動補正も可能 |
+| `sales_name` | 販売名 | VARCHAR(100) | Yes |  | 例: ツムラ安中散エキス顆粒 |
+| `reading` | 読み方 | VARCHAR(100) | No |  | PDFの `漢方製剤` 直後にあるカタカナ行（位置ソート済みテキストを優先）から抽出し、空白を除去した値。例: `アンチュウサン` |
 | `efficacy_condition_text` | 効能又は効果（前段） | TEXT | Yes |  | 症状や適応条件の記載 |
 | `efficacy_indication_text` | 摘要 | TEXT | Yes |  | 疾患名や適応の記載 |
 | `dosage_daily_amount` | 1日量 | NUMERIC(10,3) | Yes |  | 例: 7.5 |
@@ -47,7 +47,8 @@
 
 - `sales_name` は一意制約を付与することを推奨する。
 - `identification_code` は、PDF内の識別表示から抽出したコードを保存する。
-- `reading` は PDF から自動抽出できない場合があるため、取り込み後の編集画面で補正できるようにする。
+- `reading` は PDF の `漢方製剤` の直後にあるカタカナ行（ふりがな順を保つため位置ソート済みテキストを優先）から抽出し、半角スペースと全角スペースを除去して保存する。
+- PDF のテキスト層で読み方が取れない場合は、取り込み後の編集画面で補正できるようにする。
 - PDF本文が将来改訂される可能性があるため、元ファイル名や文書番号を残せるようにする。
 
 ### 3.2 `kampo_ingredients`
@@ -109,9 +110,9 @@ kampo_products
 ### 5.1 `kampo_products`
 
 - `sales_name`
-  - `ツムラ安中散エキス顆粒（医療用）`
+  - `ツムラ安中散エキス顆粒`
 - `reading`
-  - `つむらあんちゅうさんえきすかりゅう`
+  - `アンチュウサン`
 - `identification_code`
   - `5`
 - `efficacy_condition_text`

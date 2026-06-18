@@ -105,11 +105,11 @@
           </div>
           <div class="field">
             <label for="salesName">販売名</label>
-            <input id="salesName" type="text" th:field="*{salesName}" />
+            <input id="salesName" type="text" maxlength="100" th:field="*{salesName}" />
           </div>
           <div class="field">
             <label for="reading">読み方</label>
-            <input id="reading" type="text" th:field="*{reading}" />
+            <input id="reading" type="text" maxlength="100" pattern="^[ァ-ヶー]*$" title="全角カタカナで入力してください" th:field="*{reading}" />
           </div>
           <div class="field">
             <label for="sourceFileName">元ファイル名</label>

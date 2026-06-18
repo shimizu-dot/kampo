@@ -102,11 +102,11 @@
           </div>
           <div class="label">販売名</div>
           <div>
-            <input class="field-input" type="text" th:field="*{salesName}" />
+            <input class="field-input" type="text" maxlength="100" th:field="*{salesName}" />
           </div>
           <div class="label">読み方</div>
           <div>
-            <input class="field-input" type="text" th:field="*{reading}" placeholder="例: つむらあんちゅうさん" />
+            <input class="field-input" type="text" maxlength="100" pattern="^[ァ-ヶー]*$" title="全角カタカナで入力してください" th:field="*{reading}" placeholder="例: ツムラアンチュウサン" />
           </div>
         </div>
       </div>

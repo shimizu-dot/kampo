@@ -9,13 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class KampoImportService {
 
 	private final KampoImportRepository repository;
+	private final KampoInputValidator inputValidator;
 
-	public KampoImportService(KampoImportRepository repository) {
+	public KampoImportService(KampoImportRepository repository, KampoInputValidator inputValidator) {
 		this.repository = repository;
+		this.inputValidator = inputValidator;
 	}
 
 	@Transactional
 	public long register(KampoImportDraft draft) {
+		inputValidator.validateSalesName(draft.getSalesName());
+		inputValidator.validateReading(draft.getReading());
 		long productId = repository.insertProduct(draft);
 		for (var ingredient : draft.getIngredients()) {
 			long ingredientId = repository.findOrCreateIngredient(ingredient.getIngredientName());

@@ -1,6 +1,9 @@
 package com.example.kanpo.repository;
 
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
 
@@ -157,6 +160,7 @@ public class KampoImportRepository {
 			   OR reading ILIKE ?
 			ORDER BY id DESC
 			""",
+			true,
 			identificationCode,
 			"%" + identificationCode + "%",
 			"%" + identificationCode + "%");
@@ -177,16 +181,21 @@ public class KampoImportRepository {
 				p.source_document_no,
 				CASE WHEN p.identification_code ~ '^[0-9]+$' THEN p.identification_code::bigint END AS identification_code_sort_key
 			FROM kampo_products p
-			JOIN kampo_product_ingredients pi ON pi.product_id = p.id
-			JOIN kampo_ingredients i ON i.id = pi.ingredient_id
-			WHERE i.ingredient_name ILIKE ?
-			   OR p.sales_name ILIKE ?
+			WHERE p.sales_name ILIKE ?
 			   OR p.reading ILIKE ?
+			   OR EXISTS (
+			   	SELECT 1
+			   	FROM kampo_product_ingredients pi
+			   	JOIN kampo_ingredients i ON i.id = pi.ingredient_id
+			   	WHERE pi.product_id = p.id
+			   	  AND i.ingredient_name ILIKE ?
+			   )
 			ORDER BY
 				identification_code_sort_key NULLS LAST,
 				p.identification_code,
 				p.id DESC
 			""",
+			true,
 			"%" + ingredientName + "%",
 			"%" + ingredientName + "%",
 			"%" + ingredientName + "%");
@@ -211,6 +220,7 @@ public class KampoImportRepository {
 			   OR reading ILIKE ?
 			ORDER BY id DESC
 			""",
+			true,
 			"%" + summaryText + "%",
 			"%" + summaryText + "%",
 			"%" + summaryText + "%");
@@ -241,6 +251,7 @@ public class KampoImportRepository {
 			LIMIT ?
 			OFFSET ?
 			""",
+			false,
 			limit,
 			offset);
 	}
@@ -261,6 +272,7 @@ public class KampoImportRepository {
 			FROM kampo_products
 			WHERE id = ?
 			""",
+			true,
 			id);
 		return products.isEmpty() ? null : products.get(0);
 	}
@@ -270,7 +282,7 @@ public class KampoImportRepository {
 		return count == null ? 0L : count;
 	}
 
-	private List<KampoProductView> findProducts(String sql, Object... args) {
+	private List<KampoProductView> findProducts(String sql, boolean loadIngredients, Object... args) {
 		List<KampoProductView> products = jdbcTemplate.query(sql, (rs, rowNum) -> {
 			KampoProductView product = new KampoProductView();
 			product.setId(rs.getLong("id"));
@@ -286,32 +298,52 @@ public class KampoImportRepository {
 			return product;
 		}, args);
 
-		for (KampoProductView product : products) {
-			List<KampoIngredientView> ingredients = jdbcTemplate.query("""
-				SELECT
-					pi.sort_order,
-					i.ingredient_name,
-					pi.amount_value,
-					pi.amount_unit,
-					pi.raw_amount_text
-				FROM kampo_product_ingredients pi
-				JOIN kampo_ingredients i ON i.id = pi.ingredient_id
-				WHERE pi.product_id = ?
-				ORDER BY pi.sort_order, pi.id
-				""",
-				(rs, rowNum) -> {
-					KampoIngredientView ingredient = new KampoIngredientView();
-					ingredient.setSortOrder(rs.getInt("sort_order"));
-					ingredient.setIngredientName(rs.getString("ingredient_name"));
-					ingredient.setAmountValue(rs.getBigDecimal("amount_value"));
-					ingredient.setAmountUnit(rs.getString("amount_unit"));
-					ingredient.setRawAmountText(rs.getString("raw_amount_text"));
-					return ingredient;
-				},
-				product.getId());
-			product.setIngredients(ingredients);
+		if (loadIngredients && !products.isEmpty()) {
+			loadIngredients(products);
 		}
 
 		return products;
+	}
+
+	private void loadIngredients(List<KampoProductView> products) {
+		List<Long> productIds = products.stream().map(KampoProductView::getId).toList();
+		String placeholders = String.join(",", java.util.Collections.nCopies(productIds.size(), "?"));
+		String sql = """
+			SELECT
+				pi.product_id,
+				pi.sort_order,
+				i.ingredient_name,
+				pi.amount_value,
+				pi.amount_unit,
+				pi.raw_amount_text
+			FROM kampo_product_ingredients pi
+			JOIN kampo_ingredients i ON i.id = pi.ingredient_id
+			WHERE pi.product_id IN (""" + placeholders + """
+			)
+			ORDER BY pi.product_id, pi.sort_order, pi.id
+			""";
+
+		Map<Long, List<KampoIngredientView>> ingredientsByProductId = new LinkedHashMap<>();
+		for (Long productId : productIds) {
+			ingredientsByProductId.put(productId, new ArrayList<>());
+		}
+
+		jdbcTemplate.query(sql, rs -> {
+			while (rs.next()) {
+				Long productId = rs.getLong("product_id");
+				KampoIngredientView ingredient = new KampoIngredientView();
+				ingredient.setSortOrder(rs.getInt("sort_order"));
+				ingredient.setIngredientName(rs.getString("ingredient_name"));
+				ingredient.setAmountValue(rs.getBigDecimal("amount_value"));
+				ingredient.setAmountUnit(rs.getString("amount_unit"));
+				ingredient.setRawAmountText(rs.getString("raw_amount_text"));
+				ingredientsByProductId.computeIfAbsent(productId, ignored -> new ArrayList<>()).add(ingredient);
+			}
+			return null;
+		}, productIds.toArray());
+
+		for (KampoProductView product : products) {
+			product.setIngredients(ingredientsByProductId.getOrDefault(product.getId(), new ArrayList<>()));
+		}
 	}
 }
