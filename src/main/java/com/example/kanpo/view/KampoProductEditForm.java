@@ -1,23 +1,20 @@
-package com.example.kanpo.importer;
+package com.example.kanpo.view;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 import lombok.Data;
 
 @Data
-public class KampoImportDraft {
+public class KampoProductEditForm {
 
-	private String sourceFileName;
-	private String sourceDocumentNo;
+	private long id;
 	private String identificationCode;
 	private String salesName;
 	private String reading;
 	private String efficacyConditionText;
 	private String efficacyIndicationText;
-	private boolean efficacySplitFallback;
 	private BigDecimal dosageDailyAmount;
 	private String dosageInstructionsText;
-	private List<KampoIngredientDraft> ingredients = new ArrayList<>();
+	private String sourceFileName;
+	private String sourceDocumentNo;
 }

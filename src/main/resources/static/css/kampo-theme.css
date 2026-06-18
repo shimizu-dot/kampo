@@ -1,0 +1,272 @@
+:root {
+  --app-bg: #f6f7fb;
+  --app-text: #1f2937;
+  --app-panel: #ffffff;
+  --app-panel-soft: #f3f4f8;
+  --app-border: #e5e7eb;
+  --app-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --app-muted: #6b7280;
+  --app-muted-strong: #374151;
+  --app-input-bg: #ffffff;
+  --app-input-text: #111827;
+  --app-button-bg: #111827;
+  --app-button-text: #ffffff;
+  --app-button-border: #111827;
+  --app-secondary-bg: #ffffff;
+  --app-secondary-text: #111827;
+  --app-secondary-border: #d1d5db;
+  --app-pill-bg: #eef2ff;
+  --app-pill-text: #4338ca;
+  --app-message-bg: #eff6ff;
+  --app-message-text: #1d4ed8;
+  --app-message-border: #bfdbfe;
+  --app-error-bg: #fef2f2;
+  --app-error-text: #991b1b;
+  --app-error-border: #fecaca;
+  --app-table-head: #f9fafb;
+  --app-table-row-hover: #f8fafc;
+  --app-highlight-bg: #fde68a;
+  --app-highlight-text: #92400e;
+  --app-subtle: #fcfcfd;
+  --app-header-menu-bg: rgba(15, 23, 42, 0.98);
+  --app-header-menu-border: rgba(255, 255, 255, 0.08);
+  --app-header-control-bg: rgba(255, 255, 255, 0.08);
+  --app-header-control-border: rgba(255, 255, 255, 0.12);
+  --app-header-control-text: #ffffff;
+  --app-header-brand: #bfdbfe;
+  --app-header-title: #ffffff;
+  --app-header-subtitle: #dbeafe;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #0b1020;
+  --app-text: #f1f5f9;
+  --app-panel: #151c2d;
+  --app-panel-soft: #1b2436;
+  --app-border: #344154;
+  --app-shadow: 0 18px 38px rgba(0, 0, 0, 0.32);
+  --app-muted: #aeb8c8;
+  --app-muted-strong: #e2e8f0;
+  --app-input-bg: #1f2937;
+  --app-input-text: #f8fafc;
+  --app-button-bg: #dbeafe;
+  --app-button-text: #162033;
+  --app-button-border: #93c5fd;
+  --app-secondary-bg: #111827;
+  --app-secondary-text: #f8fafc;
+  --app-secondary-border: #4b5a72;
+  --app-pill-bg: #24324b;
+  --app-pill-text: #d7ebff;
+  --app-message-bg: #18355a;
+  --app-message-text: #d7ebff;
+  --app-message-border: #33669a;
+  --app-error-bg: #3a1e28;
+  --app-error-text: #ffd7de;
+  --app-error-border: #a14a5f;
+  --app-table-head: #202a3d;
+  --app-table-row-hover: #263149;
+  --app-highlight-bg: #a16207;
+  --app-highlight-text: #fff3c4;
+  --app-subtle: #151c2d;
+  --app-header-menu-bg: rgba(8, 12, 22, 0.98);
+  --app-header-menu-border: rgba(255, 255, 255, 0.1);
+  --app-header-control-bg: rgba(255, 255, 255, 0.1);
+  --app-header-control-border: rgba(255, 255, 255, 0.16);
+  --app-header-control-text: #ffffff;
+  --app-header-brand: #bfdbfe;
+  --app-header-title: #ffffff;
+  --app-header-subtitle: #e0f2fe;
+}
+
+body {
+  background: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+main {
+  color: var(--app-text);
+}
+
+.card,
+.result-card,
+.summary,
+.ingredient-card {
+  background: var(--app-panel) !important;
+  border-color: var(--app-border) !important;
+  box-shadow: var(--app-shadow) !important;
+}
+
+.card,
+.result-card,
+.summary,
+.ingredient-card,
+.summary-item {
+  color: var(--app-text);
+}
+
+.note,
+.readonly-note,
+.label,
+.field-label,
+.site-header__subtitle {
+  color: var(--app-muted) !important;
+}
+
+.value {
+  color: var(--app-text) !important;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="file"],
+.field-input,
+.field-textarea {
+  background: var(--app-input-bg) !important;
+  color: var(--app-input-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] input[type="file"],
+html[data-theme="dark"] .field-input,
+html[data-theme="dark"] .field-textarea {
+  background: #243247 !important;
+  border-color: #4b5a72 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+button,
+.primary {
+  background: var(--app-button-bg) !important;
+  color: var(--app-button-text) !important;
+  border-color: var(--app-button-border) !important;
+}
+
+.secondary {
+  background: var(--app-secondary-bg) !important;
+  color: var(--app-secondary-text) !important;
+  border-color: var(--app-secondary-border) !important;
+}
+
+.pill,
+.tag {
+  background: var(--app-pill-bg) !important;
+  color: var(--app-pill-text) !important;
+}
+
+.message {
+  background: var(--app-message-bg) !important;
+  color: var(--app-message-text) !important;
+  border-color: var(--app-message-border) !important;
+}
+
+.error,
+.error-details {
+  color: var(--app-error-text);
+}
+
+.error {
+  background: var(--app-error-bg) !important;
+  border-color: var(--app-error-border) !important;
+}
+
+.search-options {
+  background: var(--app-panel-soft) !important;
+}
+
+.search-option.active {
+  background: var(--app-panel) !important;
+  color: var(--app-text) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+.result-card,
+.summary-item,
+details.result-card > summary,
+.list-table th,
+.list-table td,
+table th,
+table td {
+  border-color: var(--app-border) !important;
+}
+
+.summary-item,
+.result-card__content,
+.list-table th,
+.list-table td,
+table th,
+table td {
+  background: transparent;
+  color: var(--app-text);
+}
+
+.result-card,
+.summary-item {
+  background: var(--app-subtle) !important;
+}
+
+.list-table th,
+table th {
+  background: var(--app-table-head) !important;
+}
+
+.list-table tr:hover td {
+  background: var(--app-table-row-hover) !important;
+}
+
+.match {
+  background: var(--app-highlight-bg) !important;
+  color: var(--app-highlight-text) !important;
+}
+
+.site-header__panel {
+  color: var(--app-header-control-text);
+}
+
+html[data-theme="dark"] .site-header__panel {
+  background: linear-gradient(135deg, #020617 0%, #0f172a 26%, #1d4ed8 66%, #38bdf8 100%) !important;
+}
+
+.site-header__menu > summary,
+.theme-toggle {
+  background: var(--app-header-control-bg) !important;
+  border-color: var(--app-header-control-border) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+.site-header__menu-panel {
+  background: var(--app-header-menu-bg) !important;
+  border-color: var(--app-header-menu-border) !important;
+}
+
+.site-nav a {
+  color: var(--app-header-control-text);
+}
+
+.site-nav a.active {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="dark"] .site-nav a.active {
+  background: #eff6ff !important;
+  color: #0f172a !important;
+}
+
+.theme-toggle__icon {
+  color: currentColor;
+}
+
+.site-header__brand {
+  color: var(--app-header-brand) !important;
+}
+
+.site-header__title {
+  color: var(--app-header-title) !important;
+}
+
+.site-header__subtitle {
+  color: var(--app-header-subtitle) !important;
+}

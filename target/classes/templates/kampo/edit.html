@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>データ編集</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 1100px; margin: 20px auto 40px; padding: 24px; }
+    .card { background: #f3f4f8; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 24px; }
+    h1, h2, h3 { margin-top: 0; }
+    .note { color: #6b7280; margin-bottom: 0; }
+    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .error-details { margin: 12px 0 0; padding-left: 18px; color: #7f1d1d; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field--wide { grid-column: 1 / -1; }
+    label { font-weight: 600; font-size: 14px; }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .section {
+      margin-top: 22px;
+      background: #fafbfc;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .section h2 { margin-bottom: 12px; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .summary-item {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .summary-label { display: block; color: #6b7280; font-size: 12px; margin-bottom: 4px; }
+    .summary-value { font-weight: 600; word-break: break-word; }
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+    .actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+    button, .secondary {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 8px 12px;
+      text-decoration: none;
+      border: 1px solid #d1d5db;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+    }
+    button { background: #111827; color: #fff; border-color: #111827; }
+    .secondary { color: #111827; background: #fff; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 12px; }
+    @media (max-width: 720px) {
+      main { margin: 0; padding: 12px; }
+      .card { padding: 16px; border-radius: 14px; }
+      .form-grid, .summary-grid { grid-template-columns: 1fr; }
+      .field--wide { grid-column: auto; }
+      .actions { flex-direction: column; }
+      .actions .secondary, .actions button { width: 100%; text-align: center; box-sizing: border-box; }
+      textarea { min-height: 96px; }
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/kampo-theme.css}" />
+</head>
+<body>
+<div th:replace="~{kampo/fragments :: pageHeader('データ編集', '検索結果から内容を修正して更新できます。', ${activeTab})}"></div>
+<main>
+  <div class="card" th:object="${editForm}">
+    <h1>編集</h1>
+    <p class="note">主テーブルの項目を修正して保存してください。</p>
+
+    <div class="error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <ul class="error-details" th:if="${errorDetails}">
+      <li th:each="detail : ${errorDetails}" th:text="${detail}"></li>
+    </ul>
+
+    <form th:action="@{/kampo/search/{id}/edit(id=${editForm.id}, searchType=${searchType}, searchKeyword=${searchKeyword})}" method="post">
+      <div class="section">
+        <h2>基本情報</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="identificationCode">識別コード</label>
+            <input id="identificationCode" type="text" th:field="*{identificationCode}" />
+          </div>
+          <div class="field">
+            <label for="salesName">販売名</label>
+            <input id="salesName" type="text" th:field="*{salesName}" />
+          </div>
+          <div class="field">
+            <label for="reading">読み方</label>
+            <input id="reading" type="text" th:field="*{reading}" />
+          </div>
+          <div class="field">
+            <label for="sourceFileName">元ファイル名</label>
+            <input id="sourceFileName" type="text" th:field="*{sourceFileName}" />
+          </div>
+          <div class="field field--wide">
+            <label for="sourceDocumentNo">文書番号</label>
+            <input id="sourceDocumentNo" type="text" th:field="*{sourceDocumentNo}" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>効能又は効果</h2>
+        <div class="form-grid">
+          <div class="field field--wide">
+            <label for="efficacyConditionText">前段</label>
+            <textarea id="efficacyConditionText" th:field="*{efficacyConditionText}"></textarea>
+          </div>
+          <div class="field field--wide">
+            <label for="efficacyIndicationText">摘要</label>
+            <textarea id="efficacyIndicationText" th:field="*{efficacyIndicationText}"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>用法及び用量</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="dosageDailyAmount">1日量</label>
+            <input id="dosageDailyAmount" type="text" th:field="*{dosageDailyAmount}" />
+          </div>
+          <div class="field field--wide">
+            <label for="dosageInstructionsText">用法</label>
+            <textarea id="dosageInstructionsText" th:field="*{dosageInstructionsText}"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>登録内容</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">ID</span>
+            <span class="summary-value" th:text="*{id}"></span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">検索種別</span>
+            <span class="summary-value" th:text="${searchType}"></span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">検索語</span>
+            <span class="summary-value" th:text="${searchKeyword}"></span>
+          </div>
+        </div>
+
+        <div class="table-wrap" th:if="${product != null}">
+          <p class="pill" style="margin-top: 16px;">有効成分</p>
+          <table>
+            <thead>
+            <tr>
+              <th>順序</th>
+              <th>有効成分名</th>
+              <th>配合量</th>
+              <th>単位</th>
+              <th>原文</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="ingredient : ${product.ingredients}">
+              <td th:text="${ingredient.sortOrder}"></td>
+              <td th:text="${ingredient.ingredientName}"></td>
+              <td th:text="${ingredient.amountValue}"></td>
+              <td th:text="${ingredient.amountUnit}"></td>
+              <td th:text="${ingredient.rawAmountText}"></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">更新</button>
+        <a class="secondary" th:href="${backUrl}">戻る</a>
+      </div>
+    </form>
+  </div>
+</main>
+</body>
+</html>

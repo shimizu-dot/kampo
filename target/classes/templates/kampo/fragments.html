@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div th:fragment="pageHeader(title, subtitle, active)">
+    <style>
+      .site-header {
+        max-width: 1100px;
+        margin: 12px auto 0;
+        padding: 0 20px;
+      }
+      .site-header__panel {
+        background: linear-gradient(135deg, #020617 0%, #0f172a 28%, #1e3a8a 58%, #2563eb 82%, #60a5fa 100%);
+        color: #fff;
+        border-radius: 22px;
+        padding: 12px 14px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+      }
+      .site-header__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .site-header__controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        flex: 0 0 auto;
+      }
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        cursor: pointer;
+        user-select: none;
+        font-size: 12px;
+        line-height: 1;
+        transition: background-color 0.15s ease, transform 0.15s ease;
+      }
+      .theme-toggle:hover {
+        transform: translateY(-1px);
+      }
+      .theme-toggle__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 12px;
+        height: 12px;
+        color: currentColor;
+      }
+      .theme-toggle__icon--sun {
+        display: none;
+      }
+      html[data-theme="dark"] .theme-toggle__icon--moon {
+        display: none;
+      }
+      html[data-theme="dark"] .theme-toggle__icon--sun {
+        display: inline-flex;
+      }
+      .site-header__menu {
+        position: relative;
+        flex: 0 0 auto;
+      }
+      .site-header__menu > summary {
+        list-style: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        cursor: pointer;
+        user-select: none;
+        font-size: 12px;
+        line-height: 1;
+        transition: background-color 0.15s ease, transform 0.15s ease;
+      }
+      .site-header__menu > summary::-webkit-details-marker {
+        display: none;
+      }
+      .site-header__menu > summary:hover {
+        transform: translateY(-1px);
+      }
+      .site-header__menu-icon {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .site-header__menu-icon span {
+        display: block;
+        width: 12px;
+        height: 1.5px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+      .site-header__menu-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        min-width: 170px;
+        padding: 6px;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+        display: grid;
+        gap: 4px;
+        z-index: 10;
+      }
+      .site-header__brand {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #bfdbfe;
+        margin-bottom: 8px;
+      }
+      .site-header__title {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      .site-header__subtitle {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: #cbd5e1;
+        line-height: 1.6;
+      }
+      .site-nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 10px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #e2e8f0;
+        border: 1px solid transparent;
+        background: transparent;
+        transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+      }
+      .site-nav a.active {
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+      .site-nav a:hover {
+        transform: translateY(-1px);
+      }
+      .site-header__menu:not([open]) .site-header__menu-panel {
+        display: none;
+      }
+      @media (max-width: 720px) {
+        .site-header {
+          margin-top: 0;
+          padding: 8px 10px 0;
+        }
+        .site-header__panel {
+          border-radius: 18px;
+          padding: 10px 12px;
+        }
+        .site-header__top {
+          flex-direction: column;
+          gap: 12px;
+        }
+        .site-header__controls {
+          align-self: flex-end;
+          margin-left: 0;
+        }
+        .site-nav a {
+          width: 100%;
+          justify-content: center;
+          min-width: 0;
+          padding: 7px 10px;
+          font-size: 12px;
+          border-radius: 11px;
+        }
+        .site-header__title { font-size: 18px; }
+        .site-header__subtitle { font-size: 12px; }
+        .site-header__menu {
+          align-self: flex-end;
+        }
+      }
+    </style>
+    <header class="site-header">
+      <div class="site-header__panel">
+        <div class="site-header__top">
+          <div>
+            <div class="site-header__brand">Kampo Manager</div>
+            <h1 class="site-header__title" th:text="${title}">Title</h1>
+            <p class="site-header__subtitle" th:text="${subtitle}">Subtitle</p>
+          </div>
+          <div class="site-header__controls">
+            <button class="theme-toggle" type="button" aria-pressed="false" aria-label="ダークモードを切り替える" data-theme-toggle>
+              <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
+              <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
+            </button>
+            <details class="site-header__menu">
+              <summary aria-label="主要メニューを開く">
+                <span class="site-header__menu-icon" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                <span>メニュー</span>
+              </summary>
+              <nav class="site-nav site-header__menu-panel" aria-label="主要メニュー">
+                <a th:href="@{/kampo/import}" th:classappend="${active == 'import'} ? ' active' : ''">取込</a>
+                <a th:href="@{/kampo/search}" th:classappend="${active == 'search'} ? ' active' : ''">検索</a>
+                <a th:href="@{/kampo/search(listAll=true)}" th:classappend="${active == 'list'} ? ' active' : ''">一覧</a>
+                <a th:href="@{/kampo/backup}" th:classappend="${active == 'backup'} ? ' active' : ''">バックアップ</a>
+              </nav>
+            </details>
+          </div>
+        </div>
+      </div>
+    </header>
+    <script>
+      (function () {
+        const key = 'kampo-theme';
+        const root = document.documentElement;
+        const toggle = document.querySelector('[data-theme-toggle]');
+
+        function applyTheme(theme) {
+          const nextTheme = theme === 'dark' ? 'dark' : 'light';
+          root.dataset.theme = nextTheme;
+          if (toggle) {
+            toggle.setAttribute('aria-pressed', nextTheme === 'dark' ? 'true' : 'false');
+            toggle.setAttribute('title', nextTheme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え');
+          }
+        }
+
+        try {
+          const saved = localStorage.getItem(key);
+          if (saved === 'dark' || saved === 'light') {
+            applyTheme(saved);
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            applyTheme('dark');
+          } else {
+            applyTheme('light');
+          }
+        } catch (err) {
+          applyTheme('light');
+        }
+
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+            try {
+              localStorage.setItem(key, nextTheme);
+            } catch (err) {
+              // ignore storage failures
+            }
+          });
+        }
+      })();
+    </script>
+  </div>
+</body>
+</html>

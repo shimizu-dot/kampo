@@ -92,10 +92,20 @@ public class KampoPdfParser {
 		for (String line : lines) {
 			Matcher matcher = SALES_NAME_PATTERN.matcher(line);
 			if (matcher.find()) {
-				return matcher.group(1).trim();
+				return normalizeSalesName(matcher.group(1));
 			}
 		}
 		throw new KampoPdfImportException("販売名を抽出できませんでした。");
+	}
+
+	private String normalizeSalesName(String salesName) {
+		if (salesName == null) {
+			return "";
+		}
+		return salesName
+				.replace("（医療用）", "")
+				.replace("(医療用)", "")
+				.trim();
 	}
 
 	private void fillComposition(List<String> lines, KampoImportDraft draft) {
@@ -148,6 +158,7 @@ public class KampoPdfParser {
 		if (matcher.find()) {
 			draft.setEfficacyConditionText(cleanJapaneseText(matcher.group(1)));
 			draft.setEfficacyIndicationText(cleanJapaneseText(matcher.group(2)));
+			draft.setEfficacySplitFallback(false);
 			return;
 		}
 		int colonIndex = section.indexOf('：');
@@ -155,10 +166,16 @@ public class KampoPdfParser {
 			colonIndex = section.indexOf(':');
 		}
 		if (colonIndex < 0) {
-			throw new KampoPdfImportException("効能又は効果の分割に失敗しました。");
+			draft.setEfficacyConditionText(section);
+			draft.setEfficacyIndicationText("");
+			draft.setEfficacySplitFallback(true);
+			return;
 		}
-		draft.setEfficacyConditionText(cleanJapaneseText(section.substring(0, colonIndex)));
-		draft.setEfficacyIndicationText(cleanJapaneseText(section.substring(colonIndex + 1)));
+		String condition = cleanJapaneseText(section.substring(0, colonIndex));
+		String indication = cleanJapaneseText(section.substring(colonIndex + 1));
+		draft.setEfficacyConditionText(condition);
+		draft.setEfficacyIndicationText(indication);
+		draft.setEfficacySplitFallback(false);
 	}
 
 	private void fillDosage(String text, KampoImportDraft draft) {
@@ -174,14 +191,6 @@ public class KampoPdfParser {
 		}
 		draft.setDosageDailyAmount(new BigDecimal(matcher.group(1)));
 		draft.setDosageInstructionsText(cleanJapaneseText(matcher.group(2)));
-	}
-
-	private String joinAndNormalize(List<String> lines, int startInclusive, int endExclusive) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = startInclusive; i < endExclusive; i++) {
-			builder.append(lines.get(i));
-		}
-		return cleanJapaneseText(builder.toString());
 	}
 
 	private String joinWithNewlines(List<String> lines, int startInclusive, int endExclusive) {
@@ -218,7 +227,7 @@ public class KampoPdfParser {
 		if (draft.getEfficacyConditionText() == null || draft.getEfficacyConditionText().isBlank()) {
 			missing.add("効能又は効果（前段）");
 		}
-		if (draft.getEfficacyIndicationText() == null || draft.getEfficacyIndicationText().isBlank()) {
+		if (!draft.isEfficacySplitFallback() && (draft.getEfficacyIndicationText() == null || draft.getEfficacyIndicationText().isBlank())) {
 			missing.add("摘要");
 		}
 		if (draft.getDosageDailyAmount() == null) {

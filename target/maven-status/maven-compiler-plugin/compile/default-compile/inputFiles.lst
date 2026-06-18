@@ -5,5 +5,16 @@
 /Users/academia/src/kampo/src/main/java/com/example/kanpo/importer/KampoPdfImportException.java
 /Users/academia/src/kampo/src/main/java/com/example/kanpo/importer/KampoPdfParser.java
 /Users/academia/src/kampo/src/main/java/com/example/kanpo/repository/KampoImportRepository.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/service/KampoBackupService.java
 /Users/academia/src/kampo/src/main/java/com/example/kanpo/service/KampoImportService.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/service/KampoSearchService.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/KampoBackupFileView.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/KampoBackupResult.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/KampoIngredientView.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/KampoProductEditForm.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/KampoProductView.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/view/TextHighlightService.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/web/HomeController.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/web/KampoBackupController.java
 /Users/academia/src/kampo/src/main/java/com/example/kanpo/web/KampoImportController.java
+/Users/academia/src/kampo/src/main/java/com/example/kanpo/web/KampoSearchController.java

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>識別コード検索</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 1100px; margin: 20px auto 40px; padding: 24px; }
+    .card { background: #f3f4f8; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 24px; }
+    h1, h2, h3 { margin-top: 0; }
+    .note { color: #6b7280; }
+    .searchbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-top: 14px; }
+    .field { flex: 1 1 280px; }
+    .search-options {
+      display: flex;
+      gap: 4px;
+      flex-wrap: nowrap;
+      margin: 8px 0 2px;
+      padding: 4px;
+      border-radius: 16px;
+      background: #e5e7eb;
+    }
+    .search-option {
+      display: inline-flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      line-height: 1;
+      transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .search-option input { margin: 0; transform: scale(0.92); }
+    .search-option.active {
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.08);
+    }
+    .field > label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    input[type="text"] { width: 100%; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; }
+    button, .secondary { display: inline-block; border-radius: 999px; padding: 8px 12px; text-decoration: none; border: 1px solid #d1d5db; cursor: pointer; font: inherit; font-size: 13px; }
+    button { background: #111827; color: #fff; border-color: #111827; }
+    .secondary { color: #111827; background: #fff; }
+    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .error-details { margin: 12px 0 0; padding-left: 18px; color: #7f1d1d; }
+    .message { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .results { margin-top: 24px; display: grid; gap: 16px; }
+    .result-card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; background: #fcfcfd; }
+    details.result-card { padding: 0; }
+    details.result-card > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 20px;
+    }
+    details.result-card > summary::-webkit-details-marker { display: none; }
+    .result-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    details.result-card > summary .result-head { margin-bottom: 0; }
+    .result-card__content { padding: 0 20px 20px; }
+    .result-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .summary-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 0;
+    }
+    .meta { display: grid; grid-template-columns: 180px 1fr; gap: 10px 16px; }
+    .label { color: #6b7280; }
+    .value { font-weight: 600; word-break: break-word; }
+    .match {
+      background: #fde68a;
+      color: #92400e;
+      padding: 0 0.15em;
+      border-radius: 0.25em;
+    }
+    .section { margin-top: 20px; }
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+    .actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .detail-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 12px; }
+    .list-table-wrap { overflow-x: auto; margin-top: 16px; }
+    .list-table { width: 100%; border-collapse: collapse; min-width: 620px; table-layout: fixed; }
+    .list-table th, .list-table td { border-bottom: 1px solid #e5e7eb; padding: 12px 10px; text-align: left; vertical-align: top; }
+    .list-table th { background: #f9fafb; position: sticky; top: 0; }
+    .list-table tr:hover td { background: #f8fafc; }
+    .list-table th:first-child,
+    .list-table td:first-child {
+      width: 5.5rem;
+      white-space: nowrap;
+    }
+    .list-table th:nth-child(2),
+    .list-table td:nth-child(2) {
+      width: auto;
+    }
+    .list-table th:nth-child(3),
+    .list-table td:nth-child(3) {
+      width: 14rem;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .pager__info {
+      color: #6b7280;
+      font-size: 13px;
+    }
+    .pager__nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pager .secondary {
+      min-width: 4.25rem;
+      text-align: center;
+    }
+    .pager__current {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    @media (max-width: 720px) {
+      main { margin: 0; padding: 12px; }
+      .card { padding: 16px; border-radius: 14px; }
+      .searchbar { flex-direction: column; align-items: stretch; }
+      .field { flex-basis: auto; }
+      .search-options { flex-direction: column; flex-wrap: nowrap; }
+      .search-option { width: 100%; box-sizing: border-box; padding: 6px 8px; }
+      button, .secondary { width: 100%; text-align: center; box-sizing: border-box; }
+      .result-head { align-items: stretch; flex-direction: column; }
+      details.result-card > summary { padding: 14px; }
+      .result-card__content { padding: 0 14px 14px; }
+      .actions { width: 100%; flex-direction: column; }
+      .actions .pill { width: 100%; text-align: center; box-sizing: border-box; }
+      .result-summary, .meta { grid-template-columns: 1fr; }
+      .summary-item { padding: 10px 12px; }
+      .result-summary .label, .meta .label { margin-top: 8px; }
+      .result-card { padding: 14px; }
+      .section { margin-top: 16px; }
+      .section h2 { font-size: 18px; }
+      th, td { padding: 8px 6px; font-size: 14px; }
+      .list-table { min-width: 0; }
+      .list-table th:first-child, .list-table td:first-child { width: 5.5rem; }
+      .list-table th:nth-child(3), .list-table td:nth-child(3) { width: auto; }
+      .list-table td:last-child { word-break: break-word; }
+      .list-table th:nth-child(3), .list-table td:nth-child(3) { white-space: nowrap; font-size: 12px; }
+      .pager { flex-direction: column; align-items: stretch; }
+      .pager__nav { justify-content: space-between; }
+      .pager .secondary, .pager__current { flex: 1 1 0; }
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/kampo-theme.css}" />
+</head>
+<body>
+<div th:replace="~{kampo/fragments :: pageHeader('識別コード検索', '識別コード・成分名・全件一覧を、モバイルでも見やすく確認できます。', ${activeTab})}"></div>
+<main>
+  <div class="card">
+    <h1>検索条件</h1>
+    <p class="note">対象を選んで検索。</p>
+
+    <form class="searchbar" method="get" th:action="@{/kampo/search}">
+      <div class="field">
+        <label>対象</label>
+        <div class="search-options">
+          <label class="search-option" th:classappend="${searchType == 'IDENTIFICATION_CODE'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="IDENTIFICATION_CODE" th:checked="${searchType == 'IDENTIFICATION_CODE'}" />
+            <span>コード</span>
+          </label>
+          <label class="search-option" th:classappend="${searchType == 'INGREDIENT_NAME'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="INGREDIENT_NAME" th:checked="${searchType == 'INGREDIENT_NAME'}" />
+            <span>成分</span>
+          </label>
+          <label class="search-option" th:classappend="${searchType == 'SUMMARY_TEXT'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="SUMMARY_TEXT" th:checked="${searchType == 'SUMMARY_TEXT'}" />
+            <span>摘要</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="searchKeyword">検索語</label>
+        <input id="searchKeyword" name="searchKeyword" type="text" th:value="${searchKeyword}" placeholder="例: 5 / ケイヒ / 腹痛" />
+      </div>
+      <button type="submit">実行</button>
+    </form>
+
+    <div class="error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <ul class="error-details" th:if="${errorDetails}">
+      <li th:each="detail : ${errorDetails}" th:text="${detail}"></li>
+    </ul>
+    <div class="message" th:if="${message}" th:text="${message}"></div>
+    <div class="success" th:if="${successMessage}" th:text="${successMessage}"></div>
+
+    <div class="results" th:if="${searched}">
+      <div class="result-card" th:if="${listAll}">
+        <div class="result-head">
+          <span class="pill" th:text="${modeLabel}"></span>
+          <div class="actions">
+            <span class="pill" th:text="'表示: ' + ${pageFrom} + '件 〜 ' + ${pageTo} + '件'"></span>
+            <span class="pill" th:text="'全件: ' + ${totalCount} + '件'"></span>
+          </div>
+        </div>
+        <div class="list-table-wrap">
+          <table class="list-table">
+            <thead>
+            <tr>
+              <th>識別コード</th>
+              <th>販売名</th>
+              <th>読み方</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${products}">
+              <td th:text="${product.identificationCode}"></td>
+              <td th:text="${product.salesName}"></td>
+              <td th:text="${product.reading}"></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager" th:if="${totalPages > 1}">
+          <div class="pager__info" th:text="'ページ ' + ${currentPage} + ' / ' + ${totalPages}"></div>
+          <div class="pager__nav">
+            <a class="secondary" th:if="${currentPage > 1}" th:href="@{/kampo/search(listAll=true, page=1)}">先頭</a>
+            <span class="secondary" th:unless="${currentPage > 1}" aria-disabled="true">先頭</span>
+            <a class="secondary" th:if="${currentPage > 1}" th:href="@{/kampo/search(listAll=true, page=${currentPage - 1})}">前へ</a>
+            <span class="secondary" th:unless="${currentPage > 1}" aria-disabled="true">前へ</span>
+            <span class="pager__current" th:text="${currentPage}"></span>
+            <a class="secondary" th:if="${currentPage < totalPages}" th:href="@{/kampo/search(listAll=true, page=${currentPage + 1})}">次へ</a>
+            <span class="secondary" th:unless="${currentPage < totalPages}" aria-disabled="true">次へ</span>
+            <a class="secondary" th:if="${currentPage < totalPages}" th:href="@{/kampo/search(listAll=true, page=${totalPages})}">最後</a>
+            <span class="secondary" th:unless="${currentPage < totalPages}" aria-disabled="true">最後</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="result-card" th:each="product : ${products}" th:if="${!listAll}">
+        <summary>
+          <span class="result-head">
+            <span class="pill" th:text="${modeLabel}"></span>
+            <span class="actions">
+            <span class="pill" th:text="'ID: ' + ${product.id}"></span>
+            <span class="pill" th:text="'コード: ' + ${product.identificationCode}"></span>
+            </span>
+          </span>
+          <span class="result-summary">
+            <span class="summary-item">
+              <span class="label">販売名</span>
+              <span class="value" th:text="${product.salesName}"></span>
+            </span>
+            <span class="summary-item">
+              <span class="label">読み方</span>
+              <span class="value" th:utext="${product.highlightedReading}"></span>
+            </span>
+          </span>
+        </summary>
+
+        <div class="result-card__content">
+          <div class="detail-actions">
+            <a class="secondary" th:href="@{/kampo/search/{id}/edit(id=${product.id}, searchType=${searchType}, searchKeyword=${searchKeyword})}">編集</a>
+          </div>
+          <div class="meta">
+            <div class="label">販売名</div>
+            <div class="value" th:text="${product.salesName}"></div>
+            <div class="label">読み方</div>
+            <div class="value" th:utext="${product.highlightedReading}"></div>
+            <div class="label">元ファイル名</div>
+            <div class="value" th:text="${product.sourceFileName}"></div>
+            <div class="label">文書番号</div>
+            <div class="value" th:text="${product.sourceDocumentNo}"></div>
+          </div>
+
+          <div class="section">
+            <h2>効能又は効果</h2>
+            <div class="pill">前段</div>
+            <p th:text="${product.efficacyConditionText}"></p>
+            <div class="pill">摘要</div>
+            <p th:text="${product.efficacyIndicationText}"></p>
+          </div>
+
+          <div class="section">
+            <h2>用法及び用量</h2>
+            <div class="pill">1日量</div>
+            <p th:text="${product.dosageDailyAmount}"></p>
+            <div class="pill">用法</div>
+            <p th:text="${product.dosageInstructionsText}"></p>
+          </div>
+
+          <div class="section">
+            <h2>有効成分</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                <tr>
+                  <th>順序</th>
+                  <th>有効成分名</th>
+                  <th>配合量</th>
+                  <th>単位</th>
+                  <th>原文</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ingredient : ${product.ingredients}">
+                  <td th:text="${ingredient.sortOrder}"></td>
+                  <td th:utext="${ingredient.highlightedIngredientName}"></td>
+                  <td th:text="${ingredient.amountValue}"></td>
+                  <td th:text="${ingredient.amountUnit}"></td>
+                  <td th:text="${ingredient.rawAmountText}"></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+</main>
+<script>
+  (function () {
+    var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    if (nav && nav.type === 'reload' && window.location.search) {
+      window.location.replace('/kampo/search');
+    }
+  })();
+</script>
+</body>
+</html>

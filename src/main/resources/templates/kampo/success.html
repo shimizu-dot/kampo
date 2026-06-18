@@ -6,19 +6,31 @@
   <title>登録完了</title>
   <style>
     body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
-    main { max-width: 760px; margin: 40px auto; padding: 24px; }
+    main { max-width: 760px; margin: 20px auto 40px; padding: 24px; }
     .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.08); padding: 24px; }
     h1 { margin-top: 0; }
-    .secondary { display: inline-block; margin-top: 20px; border-radius: 999px; padding: 12px 20px; text-decoration: none; border: 1px solid #d1d5db; color: #111827; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    .secondary { display: inline-block; border-radius: 999px; padding: 12px 20px; text-decoration: none; border: 1px solid #d1d5db; color: #111827; background: #fff; }
+    @media (max-width: 720px) {
+      main { margin: 0; padding: 12px; }
+      .card { padding: 16px; border-radius: 14px; }
+      .actions { flex-direction: column; }
+      .secondary { width: 100%; text-align: center; box-sizing: border-box; }
+    }
   </style>
+  <link rel="stylesheet" th:href="@{/css/kampo-theme.css}" />
 </head>
 <body>
+<div th:replace="~{kampo/fragments :: pageHeader('登録完了', '登録した内容は識別コード検索や全件一覧から確認できます。', ${activeTab})}"></div>
 <main>
   <div class="card">
-    <h1>登録完了</h1>
     <p><strong th:text="${salesName}"></strong> を登録しました。</p>
+    <p th:if="${reading}">読み方: <span th:text="${reading}"></span></p>
     <p>登録ID: <span th:text="${productId}"></span></p>
-    <a class="secondary" th:href="@{/kampo/import}">続けて別のPDFを読み込む</a>
+    <div class="actions">
+      <a class="secondary" th:href="@{/kampo/search(identificationCode=${identificationCode})}">識別コード検索へ</a>
+      <a class="secondary" th:href="@{/kampo/import}">続けて別のPDFを読み込む</a>
+    </div>
   </div>
 </main>
 </body>

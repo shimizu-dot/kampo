@@ -1,28 +1,99 @@
-# Getting Started
+# 漢方PDF取込アプリ マニュアル
 
-### Reference Documentation
-For further reference, please consider the following sections:
+## 起動方法
 
-* [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
-* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/4.0.8-SNAPSHOT/maven-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.0.8-SNAPSHOT/maven-plugin/build-image.html)
-* [Spring Web](https://docs.spring.io/spring-boot/4.0.8-SNAPSHOT/reference/web/servlet.html)
-* [Thymeleaf](https://docs.spring.io/spring-boot/4.0.8-SNAPSHOT/reference/web/servlet.html#web.servlet.spring-mvc.template-engines)
-* [MyBatis Framework](https://mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/)
+1. PostgreSQL を起動する
+2. プロジェクト直下で実行する
 
-### Guides
-The following guides illustrate how to use some features concretely:
+```bash
+./mvnw spring-boot:run
+```
 
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
-* [Handling Form Submission](https://spring.io/guides/gs/handling-form-submission/)
-* [MyBatis Quick Start](https://github.com/mybatis/spring-boot-starter/wiki/Quick-Start)
+3. ブラウザで開く
 
-### Maven Parent overrides
+- `http://localhost:8080/kampo/import`
+- `http://localhost:8080/kampo/search`
 
-Due to Maven's design, elements are inherited from the parent POM to the project POM.
-While most of the inheritance is fine, it also inherits unwanted elements like `<license>` and `<developers>` from the parent.
-To prevent this, the project POM contains empty overrides for these elements.
-If you manually switch to a different parent and actually want the inheritance, you need to remove those overrides.
+### うまく起動しないとき
 
+- `8080` 番ポートが使用中だと起動できません
+- その場合は既存プロセスを停止するか、別ポートで起動してください
+
+例:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+```
+
+## 画面構成
+
+### 取込
+
+- PDF をアップロードして内容を抽出する
+- 抽出後は確認・編集画面に進む
+- 必要に応じて内容を修正して登録する
+
+### 確認・編集
+
+- 抽出された内容をそのまま確認できる
+- 販売名、識別コード、摘要、効能、用法、有効成分などを修正できる
+- 修正後に登録する
+
+### 検索
+
+- 対象を 1 つ選んで検索する
+- 対象は `コード / 成分 / 摘要`
+- キーワードを入れて実行する
+- 全件一覧はヘッダーの `一覧` を使う
+
+## 検索の使い方
+
+### 検索対象の選択
+
+- 検索対象は 1 つ選ぶ
+- `コード` は完全一致
+- `成分` と `摘要` はあいまい検索
+
+### キーワード入力
+
+- 1 つの入力欄に検索語を入れる
+- 例: `5`、`ケイヒ`、`腹痛`
+- 一致した有効成分名だけを色付きで表示する
+
+### 全件一覧
+
+- ヘッダーの `一覧` を使う
+- 一覧は「コード」と「販売名」のみ表示する
+- 識別コード順で表示する
+
+### バックアップ
+
+- ヘッダーの `バックアップ` を使う
+- 現在の DB を SQL ファイルとして保存する
+- 保存先は `src/backup`
+- ファイル名に日付と時刻が入る
+
+## 画面の表示仕様
+
+- モバイル対応済み
+- 検索結果の詳細は折りたたみ表示
+- 一覧は表形式
+- 検索結果に件数表示を出す
+- ページをリロードすると検索条件はクリアされる
+- 検索画面の移動はヘッダーの `取込 / 検索 / 一覧` を使う
+
+## エラーメッセージ
+
+- 保存失敗時は、DB 接続エラー、重複登録、必須項目不足などを画面に具体的に出す
+- テーブル未作成の場合は、その旨を表示する
+- 詳細情報も補助表示するので、ログ確認の手がかりになる
+
+## データ設計の補足
+
+- 販売名は `kampo_products`
+- 有効成分名は `kampo_ingredients`
+- 販売名と有効成分の紐付けは `kampo_product_ingredients`
+
+## 参考
+
+- テーブル設計の詳細は [docs/kampo_table_design.md](docs/kampo_table_design.md) を参照

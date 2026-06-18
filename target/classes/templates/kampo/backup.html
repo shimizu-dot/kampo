@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>バックアップ</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 860px; margin: 20px auto 40px; padding: 24px; }
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.08); padding: 24px; }
+    h1 { margin-top: 0; }
+    .note { color: #6b7280; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    button { display: inline-block; border-radius: 999px; padding: 10px 14px; text-decoration: none; border: 1px solid #111827; cursor: pointer; font: inherit; font-size: 13px; background: #111827; color: #fff; }
+    .secondary { display: inline-block; border-radius: 999px; padding: 10px 14px; text-decoration: none; border: 1px solid #d1d5db; cursor: pointer; font: inherit; font-size: 13px; color: #111827; background: #fff; }
+    .message { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .error-details { margin: 12px 0 0; padding-left: 18px; color: #7f1d1d; }
+    .summary {
+      margin-top: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fcfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .list {
+      margin-top: 22px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fcfcfd;
+      overflow: hidden;
+    }
+    .list__head {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .list__title {
+      margin: 0;
+      font-size: 16px;
+    }
+    .list__table-wrap {
+      overflow-x: auto;
+    }
+    .list__table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+    .list__table th, .list__table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .list__table th {
+      background: #f9fafb;
+    }
+    .list__actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .list__actions .secondary {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    .list__actions form {
+      display: inline;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px 16px;
+    }
+    .label { color: #6b7280; }
+    .value { font-weight: 600; word-break: break-word; }
+    @media (max-width: 720px) {
+      main { margin: 0; padding: 12px; }
+      .card { padding: 16px; border-radius: 14px; }
+      .actions { flex-direction: column; }
+      button, .secondary { width: 100%; text-align: center; box-sizing: border-box; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/kampo-theme.css}" />
+</head>
+<body>
+<div th:replace="~{kampo/fragments :: pageHeader('バックアップ', 'DB を `src/backup` に保存します。', ${activeTab})}"></div>
+<main>
+  <div class="card">
+    <h1>バックアップ作成</h1>
+    <p class="note">現在のデータを SQL ファイルにして `src/backup` に保存します。ファイル名には日付と時刻を入れます。</p>
+
+    <form method="post" th:action="@{/kampo/backup}">
+      <div class="actions">
+        <button type="submit">バックアップを作成</button>
+      </div>
+    </form>
+
+    <div class="message" th:if="${message}" th:text="${message}"></div>
+    <div class="error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <ul class="error-details" th:if="${errorDetails}">
+      <li th:each="detail : ${errorDetails}" th:text="${detail}"></li>
+    </ul>
+
+    <div class="summary" th:if="${backupResult}">
+      <div class="summary-grid">
+        <div class="label">ファイル名</div>
+        <div class="value" th:text="${backupResult.fileName}"></div>
+        <div class="label">保存先</div>
+        <div class="value" th:text="${backupResult.filePath}"></div>
+        <div class="label">サイズ</div>
+        <div class="value" th:text="${backupResult.fileSizeBytes + ' bytes'}"></div>
+        <div class="label">作成時刻</div>
+        <div class="value" th:text="${backupResult.createdAt}"></div>
+        <div class="label">製品数</div>
+        <div class="value" th:text="${backupResult.productCount}"></div>
+        <div class="label">成分数</div>
+        <div class="value" th:text="${backupResult.ingredientCount}"></div>
+        <div class="label">紐付け数</div>
+        <div class="value" th:text="${backupResult.productIngredientCount}"></div>
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="list__head">
+        <h2 class="list__title">バックアップ一覧</h2>
+        <span class="note" th:text="'件数: ' + ${backupFilesCount}"></span>
+      </div>
+      <div class="list__table-wrap">
+        <table class="list__table">
+          <thead>
+          <tr>
+            <th>ファイル名</th>
+            <th>更新日時</th>
+            <th>サイズ</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody th:if="${backupFilesCount > 0}">
+          <tr th:each="backupFile : ${backupFiles}">
+            <td th:text="${backupFile.fileName}"></td>
+            <td th:text="${backupFile.lastModifiedAt}"></td>
+            <td th:text="${backupFile.fileSizeBytes + ' bytes'}"></td>
+            <td>
+              <div class="list__actions">
+                <a class="secondary" th:href="@{/kampo/backup/download(fileName=${backupFile.fileName})}">ダウンロード</a>
+                <form method="post" th:action="@{/kampo/backup/restore}">
+                  <input type="hidden" name="fileName" th:value="${backupFile.fileName}" />
+                  <button class="secondary" type="submit" onclick="return confirm('このバックアップを復元します。現在のデータは置き換わります。よろしいですか？');">レストア</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+          <tbody th:if="${backupFilesCount == 0}">
+          <tr>
+            <td colspan="4" class="note">バックアップはまだありません。</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

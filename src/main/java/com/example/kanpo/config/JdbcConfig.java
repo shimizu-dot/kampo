@@ -13,10 +13,10 @@ public class JdbcConfig {
 
 	@Bean
 	DataSource dataSource(
-			@Value("${app.datasource.driver-class-name:org.postgresql.Driver}") String driverClassName,
-			@Value("${app.datasource.url:}") String url,
-			@Value("${app.datasource.username:}") String username,
-			@Value("${app.datasource.password:}") String password) {
+			@Value("${spring.datasource.driver-class-name:org.postgresql.Driver}") String driverClassName,
+			@Value("${spring.datasource.url:}") String url,
+			@Value("${spring.datasource.username:}") String username,
+			@Value("${spring.datasource.password:}") String password) {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
 		if (!driverClassName.isBlank()) {
 			dataSource.setDriverClassName(driverClassName);
