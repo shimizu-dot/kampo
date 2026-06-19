@@ -1,2 +1,4 @@
-C:\Projects\kampo\src\test\java\com\example\kanpo\importer\KampoPdfParserTests.java
-C:\Projects\kampo\src\test\java\com\example\kanpo\KanpoApplicationTests.java
+/Users/academia/src/kampo/src/test/java/com/example/kanpo/KanpoApplicationTests.java
+/Users/academia/src/kampo/src/test/java/com/example/kanpo/importer/KampoPdfParserTests.java
+/Users/academia/src/kampo/src/test/java/com/example/kanpo/service/KampoCombinationDoseServiceTests.java
+/Users/academia/src/kampo/src/test/java/com/example/kanpo/service/KampoSearchServiceTests.java

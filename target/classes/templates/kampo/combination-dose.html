@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>併用成分集計</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f6f7fb; color: #1f2937; }
+    main { max-width: 1180px; margin: 20px auto 40px; padding: 24px; }
+    .card { background: #f3f4f8; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 24px; }
+    h1, h2, h3 { margin-top: 0; }
+    .note { color: #6b7280; }
+    .message { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .searchbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-top: 14px; }
+    .field { flex: 1 1 280px; }
+    .field > label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    input[type="text"] { width: 100%; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; }
+    button, .secondary { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 8px 12px; text-decoration: none; border: 1px solid #d1d5db; cursor: pointer; font: inherit; font-size: 13px; }
+    button { background: #111827; color: #fff; border-color: #111827; }
+    .secondary { color: #111827; background: #fff; }
+    .search-options {
+      display: flex;
+      gap: 4px;
+      flex-wrap: nowrap;
+      margin: 8px 0 2px;
+      padding: 4px;
+      border-radius: 16px;
+      background: #e5e7eb;
+    }
+    .search-option {
+      display: inline-flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      line-height: 1;
+      transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .search-option input { margin: 0; transform: scale(0.92); }
+    .search-option.active {
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.08);
+    }
+    .section { margin-top: 24px; }
+    .section-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 12px; font-weight: 700; border: 1px solid #c7d2fe; }
+    .pill.pill--ok { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac; }
+    .pill.pill--caution { background: #fef3c7 !important; color: #92400e !important; border-color: #fbbf24; }
+    .pill.pill--review { background: #fee2e2 !important; color: #991b1b !important; border-color: #fca5a5; }
+    .pill__icon {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 999px;
+      flex: 0 0 auto;
+      background: currentColor;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8) inset;
+    }
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+    .check-cell { width: 2.5rem; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .summary-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 0;
+    }
+    .label { color: #6b7280; display: block; font-size: 12px; margin-bottom: 4px; }
+    .value { font-weight: 600; word-break: break-word; }
+    .result-table details { margin-top: 8px; }
+    .result-table summary { cursor: pointer; color: var(--app-message-text, #4338ca); }
+    .contribution-list { margin: 8px 0 0; padding-left: 18px; color: var(--app-muted-strong, #374151); }
+    .actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .actions button, .actions .secondary { min-width: 8rem; text-align: center; }
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .pager__info {
+      color: var(--app-muted, #6b7280);
+      font-size: 13px;
+    }
+    .pager__nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pager .secondary {
+      min-width: 4.25rem;
+      text-align: center;
+    }
+    .pager__current {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    @media (max-width: 720px) {
+      main { margin: 0; padding: 12px; }
+      .card { padding: 16px; border-radius: 14px; }
+      .searchbar { flex-direction: column; align-items: stretch; }
+      .field { flex-basis: auto; }
+      .search-options { flex-direction: column; flex-wrap: nowrap; }
+      .search-option { width: 100%; box-sizing: border-box; padding: 6px 8px; }
+      button, .secondary { width: 100%; box-sizing: border-box; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .actions button, .actions .secondary { width: 100%; }
+      .pager { flex-direction: column; align-items: stretch; }
+      .pager__nav { justify-content: space-between; }
+      .pager .secondary, .pager__current { flex: 1 1 0; }
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/kampo-theme.css}" />
+</head>
+<body>
+<div th:replace="~{kampo/fragments :: pageHeader('併用成分集計', '選択した漢方薬に含まれる カンゾウ・マオウ・サンシシ・ダイオウ・オウゴン の1日量を合算します。', ${activeTab})}"></div>
+<main>
+  <div class="card">
+    <h1>薬剤を選んで判定</h1>
+    <p class="note">候補を検索するか、全件一覧で薬剤を選び、判定ボタンで1日量を合算します。</p>
+
+    <form class="searchbar" method="get" th:action="@{/kampo/combination-dose}">
+      <div class="field">
+        <label>検索対象</label>
+        <div class="search-options">
+          <label class="search-option" th:classappend="${searchType == 'IDENTIFICATION_CODE'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="IDENTIFICATION_CODE" th:checked="${searchType == 'IDENTIFICATION_CODE'}" />
+            <span>コード</span>
+          </label>
+          <label class="search-option" th:classappend="${searchType == 'INGREDIENT_NAME'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="INGREDIENT_NAME" th:checked="${searchType == 'INGREDIENT_NAME'}" />
+            <span>成分</span>
+          </label>
+          <label class="search-option" th:classappend="${searchType == 'SUMMARY_TEXT'} ? ' active' : ''">
+            <input type="radio" name="searchType" value="SUMMARY_TEXT" th:checked="${searchType == 'SUMMARY_TEXT'}" />
+            <span>摘要</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="searchKeyword">検索語</label>
+        <input id="searchKeyword" name="searchKeyword" type="text" th:value="${searchKeyword}" placeholder="例: 5, 8, 12 / カンゾウ / 腹痛" />
+        <div class="note" th:if="${searchType == 'IDENTIFICATION_CODE'}">識別コードはカンマ、スペース、改行で複数入力できます。</div>
+      </div>
+      <div class="actions">
+        <button type="submit" name="listAll" value="false">検索</button>
+        <button type="submit" name="listAll" value="true">全件表示</button>
+      </div>
+    </form>
+
+    <div class="error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <div class="message" th:if="${message}" th:text="${message}"></div>
+
+    <form method="post" th:action="@{/kampo/combination-dose}" th:if="${searched}">
+      <input type="hidden" name="searchType" th:value="${searchType}" />
+      <input type="hidden" name="searchKeyword" th:value="${searchKeyword}" />
+      <input type="hidden" name="listAll" th:value="${listAll}" />
+      <input type="hidden" name="page" th:value="${currentPage}" />
+      <input type="hidden" name="selectedProductIds" th:each="selectedId : ${selectedProductIds}" th:value="${selectedId}" />
+
+      <div class="section">
+        <div class="section-head">
+          <h2>候補一覧</h2>
+          <span class="pill" th:text="|候補 ${#lists.size(candidates)} 件|"></span>
+        </div>
+        <div class="table-wrap" th:if="${!candidates.isEmpty()}">
+          <table>
+            <thead>
+            <tr>
+              <th class="check-cell">選択</th>
+              <th>識別コード</th>
+              <th>販売名</th>
+              <th>読み方</th>
+              <th>1日量</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${candidates}">
+              <td class="check-cell">
+                <input type="checkbox" name="selectedProductIds" th:value="${product.id}" th:checked="${#lists.contains(selectedProductIds, product.id)}" />
+              </td>
+              <td th:text="${product.identificationCode}"></td>
+              <td th:text="${product.salesName}"></td>
+              <td th:text="${product.reading}"></td>
+              <td th:text="${product.dosageDailyAmount}"></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pager" th:if="${listAll && totalPages > 1}">
+          <div class="pager__info" th:text="|ページ ${currentPage} / ${totalPages}  ・  ${pageFrom}件 〜 ${pageTo}件 / 全${totalCount}件|"></div>
+          <div class="pager__nav">
+            <a class="secondary" th:if="${currentPage > 1}" th:href="@{/kampo/combination-dose(listAll=true, page=1, selectedProductIds=${selectedProductIds})}">先頭</a>
+            <span class="secondary" th:unless="${currentPage > 1}" aria-disabled="true">先頭</span>
+            <a class="secondary" th:if="${currentPage > 1}" th:href="@{/kampo/combination-dose(listAll=true, page=${currentPage - 1}, selectedProductIds=${selectedProductIds})}">前へ</a>
+            <span class="secondary" th:unless="${currentPage > 1}" aria-disabled="true">前へ</span>
+            <span class="pager__current" th:text="${currentPage}"></span>
+            <span th:each="pageNumber : ${pageNumbers}">
+              <a class="secondary" th:if="${pageNumber != currentPage}" th:href="@{/kampo/combination-dose(listAll=true, page=${pageNumber}, selectedProductIds=${selectedProductIds})}" th:text="${pageNumber}"></a>
+              <span class="secondary" th:if="${pageNumber == currentPage}" aria-current="page" th:text="${pageNumber}"></span>
+            </span>
+            <a class="secondary" th:if="${currentPage < totalPages}" th:href="@{/kampo/combination-dose(listAll=true, page=${currentPage + 1}, selectedProductIds=${selectedProductIds})}">次へ</a>
+            <span class="secondary" th:unless="${currentPage < totalPages}" aria-disabled="true">次へ</span>
+            <a class="secondary" th:if="${currentPage < totalPages}" th:href="@{/kampo/combination-dose(listAll=true, page=${totalPages}, selectedProductIds=${selectedProductIds})}">最後</a>
+            <span class="secondary" th:unless="${currentPage < totalPages}" aria-disabled="true">最後</span>
+          </div>
+        </div>
+
+        <div class="actions" th:if="${!candidates.isEmpty()}">
+          <button type="submit" name="action" value="calculate">判定する</button>
+        </div>
+      </div>
+    </form>
+
+      <div class="section" th:if="${result != null}">
+        <div class="section-head">
+          <h2>判定結果</h2>
+          <span class="pill" th:classappend="${result.overallJudgementLevel == 'REVIEW'} ? ' pill--review' : (${result.overallJudgementLevel == 'CAUTION'} ? ' pill--caution' : ' pill--ok')" th:text="|${result.overallJudgementLabel} / 選択 ${#lists.size(result.selectedProducts)} 件|"></span>
+        </div>
+        <form class="actions" method="post" th:action="@{/kampo/combination-dose}">
+          <input type="hidden" name="searchType" th:value="${searchType}" />
+          <input type="hidden" name="searchKeyword" th:value="${searchKeyword}" />
+          <input type="hidden" name="listAll" th:value="${listAll}" />
+          <input type="hidden" name="page" th:value="${currentPage}" />
+          <input type="hidden" name="selectedProductIds" th:each="selectedId : ${selectedProductIds}" th:value="${selectedId}" />
+          <button type="submit" name="action" value="calculate" data-action="recalculate">再判定</button>
+          <button type="button" data-action="csv">CSV 出力</button>
+          <button type="button" data-action="pdf">PDF 表示</button>
+        </form>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">総合判定</span>
+            <span class="value" th:text="${result.overallJudgementLabel}"></span>
+          <div class="note" th:text="${result.overallJudgementNote}"></div>
+        </div>
+        <div class="summary-item">
+          <span class="label">対象成分</span>
+          <span class="value">カンゾウ / マオウ / サンシシ / ダイオウ / オウゴン</span>
+        </div>
+      </div>
+
+      <div class="warning" th:if="${!result.warnings.isEmpty()}">
+        <div th:each="warning : ${result.warnings}" th:text="${warning}"></div>
+      </div>
+
+      <div class="section">
+        <h3>選択薬剤</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>識別コード</th>
+              <th>販売名</th>
+              <th>読み方</th>
+              <th>1日量</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${result.selectedProducts}">
+              <td th:text="${product.identificationCode}"></td>
+              <td th:text="${product.salesName}"></td>
+              <td th:text="${product.reading}"></td>
+              <td th:text="${product.dosageDailyAmount}"></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>成分別合計</h3>
+        <div class="table-wrap result-table">
+          <table>
+            <thead>
+            <tr>
+              <th>成分</th>
+              <th>合計 1 日量</th>
+              <th>単位</th>
+              <th>しきい値</th>
+              <th>判定</th>
+              <th>内訳</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="total : ${result.ingredientTotals}">
+              <td th:text="${total.ingredientName}"></td>
+              <td th:text="${total.totalAmountValue}"></td>
+              <td th:text="${total.amountUnit}"></td>
+              <td>
+                <span>注意</span>
+                <span th:text="${total.cautionThreshold}"></span>
+                <span> / </span>
+                <span>要確認</span>
+                <span th:text="${total.reviewThreshold}"></span>
+              </td>
+              <td>
+                <span class="pill"
+                      th:classappend="${total.judgementLevel == 'REVIEW'} ? ' pill--review' : (${total.judgementLevel == 'CAUTION'} ? ' pill--caution' : ' pill--ok')">
+                  <span class="pill__icon" aria-hidden="true"></span>
+                  <span th:text="${total.judgementLabel}"></span>
+                </span>
+                <div class="note" th:text="${total.judgementNote}"></div>
+              </td>
+              <td>
+                <span th:text="|${total.contributionCount} 件|"></span>
+                <details>
+                  <summary>内訳を表示</summary>
+                  <ul class="contribution-list">
+                    <li th:each="item : ${total.contributions}">
+                      <span th:text="${item.salesName}"></span>
+                      <span th:text="|(${item.identificationCode}) |"></span>
+                      <span th:text="${item.amountValue}"></span>
+                      <span th:text="${item.amountUnit}"></span>
+                    </li>
+                  </ul>
+                </details>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  (function () {
+    function selectedIdsFromPage() {
+      return Array.from(document.querySelectorAll('input[name="selectedProductIds"]:checked'))
+        .map(function (input) { return input.value; })
+        .filter(function (value) { return value !== ''; });
+    }
+
+    function buildQuery(ids) {
+      var params = new URLSearchParams();
+      ids.forEach(function (id) {
+        params.append('selectedProductIds', id);
+      });
+      return params.toString();
+    }
+
+    function openPdf() {
+      var ids = selectedIdsFromPage();
+      var url = '/kampo/combination-dose/export/pdf?' + buildQuery(ids);
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function downloadCsv() {
+      var ids = selectedIdsFromPage();
+      var url = '/kampo/combination-dose/export/csv?' + buildQuery(ids);
+      window.location.assign(url);
+    }
+
+    document.addEventListener('click', function (event) {
+      var button = event.target && event.target.closest ? event.target.closest('button[data-action]') : null;
+      if (!button) {
+        return;
+      }
+      var action = button.getAttribute('data-action');
+      if (action === 'pdf') {
+        event.preventDefault();
+        openPdf();
+      } else if (action === 'csv') {
+        event.preventDefault();
+        downloadCsv();
+      }
+    });
+  })();
+</script>
+</body>
+</html>

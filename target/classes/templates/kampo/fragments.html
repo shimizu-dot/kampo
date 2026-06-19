@@ -125,6 +125,14 @@
         color: #bfdbfe;
         margin-bottom: 8px;
       }
+      .site-header__copyright {
+        text-transform: none;
+        letter-spacing: normal;
+        opacity: 0.7;
+      }
+      .site-header__copyright-mark {
+        font-size: 14px;
+      }
       .site-header__title {
         margin: 0;
         font-size: 22px;
@@ -194,7 +202,7 @@
       <div class="site-header__panel">
         <div class="site-header__top">
           <div>
-            <div class="site-header__brand">Kampo Manager</div>
+            <div class="site-header__brand">Kampo Manager <span class="site-header__copyright"><span class="site-header__copyright-mark">©</span> h4mizoo</span></div>
             <h1 class="site-header__title" th:text="${title}">Title</h1>
             <p class="site-header__subtitle" th:text="${subtitle}">Subtitle</p>
           </div>
@@ -216,6 +224,8 @@
                 <a th:href="@{/kampo/import}" th:classappend="${active == 'import'} ? ' active' : ''">取込</a>
                 <a th:href="@{/kampo/search}" th:classappend="${active == 'search'} ? ' active' : ''">検索</a>
                 <a th:href="@{/kampo/search(listAll=true)}" th:classappend="${active == 'list'} ? ' active' : ''">一覧</a>
+                <a th:href="@{/kampo/combination-dose}" th:classappend="${active == 'combination-dose'} ? ' active' : ''">併用判定</a>
+                <a th:href="@{/kampo/knowledge}" th:classappend="${active == 'knowledge'} ? ' active' : ''">ナレッジ</a>
                 <a th:href="@{/kampo/backup}" th:classappend="${active == 'backup'} ? ' active' : ''">バックアップ</a>
               </nav>
             </details>
