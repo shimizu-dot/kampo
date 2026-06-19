@@ -585,7 +585,6 @@ public class KampoCombinationDoseService {
 		private final Font titleFont = pickJapaneseFont(Font.BOLD, 28);
 		private final Font sectionFont = pickJapaneseFont(Font.BOLD, 20);
 		private final Font bodyFont = pickJapaneseFont(Font.PLAIN, 15);
-		private final Font smallFont = pickJapaneseFont(Font.PLAIN, 13);
 		private BufferedImage currentImage;
 		private Graphics2D g2d;
 		private int y;
