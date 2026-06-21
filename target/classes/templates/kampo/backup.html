@@ -29,7 +29,7 @@
       margin-top: 22px;
       border: 1px solid #e5e7eb;
       border-radius: 14px;
-      background: #fcfcfd;
+      background: var(--app-subtle, #fcfcfd);
       overflow: hidden;
     }
     .list__head {
@@ -151,10 +151,10 @@
             <td th:text="${backupFile.fileSizeBytes + ' bytes'}"></td>
             <td>
               <div class="list__actions">
-                <a class="secondary" th:href="@{/kampo/backup/download(fileName=${backupFile.fileName})}">ダウンロード</a>
+                <a class="secondary" th:href="@{/kampo/backup/download(fileName=${backupFile.fileName})}">DOWNLOAD</a>
                 <form method="post" th:action="@{/kampo/backup/restore}">
                   <input type="hidden" name="fileName" th:value="${backupFile.fileName}" />
-                  <button class="secondary" type="submit" onclick="return confirm('このバックアップを復元します。現在のデータは置き換わります。よろしいですか？');">レストア</button>
+                  <button class="secondary" type="submit" onclick="return confirm('このバックアップを復元します。現在のデータは置き換わります。よろしいですか？');">RESTORE</button>
                 </form>
               </div>
             </td>

@@ -271,10 +271,47 @@ public class KampoImportRepository {
 				source_document_no
 			FROM kampo_products
 			WHERE id = ?
-			""",
+		""",
 			true,
 			id);
 		return products.isEmpty() ? null : products.get(0);
+	}
+
+	public List<KampoProductView> findProductsByIds(List<Long> ids) {
+		if (ids == null || ids.isEmpty()) {
+			return List.of();
+		}
+		String placeholders = String.join(",", java.util.Collections.nCopies(ids.size(), "?"));
+		List<KampoProductView> products = findProducts("""
+			SELECT
+				id,
+				identification_code,
+				sales_name,
+				reading,
+				efficacy_condition_text,
+				efficacy_indication_text,
+				dosage_daily_amount,
+				dosage_instructions_text,
+				source_file_name,
+				source_document_no
+			FROM kampo_products
+			WHERE id IN (""" + placeholders + """
+			)
+			""",
+			true,
+			ids.toArray());
+		Map<Long, KampoProductView> productById = new LinkedHashMap<>();
+		for (KampoProductView product : products) {
+			productById.put(product.getId(), product);
+		}
+		List<KampoProductView> orderedProducts = new ArrayList<>();
+		for (Long id : ids) {
+			KampoProductView product = productById.get(id);
+			if (product != null) {
+				orderedProducts.add(product);
+			}
+		}
+		return orderedProducts;
 	}
 
 	public long countAllProducts() {

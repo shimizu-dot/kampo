@@ -1,6 +1,9 @@
 package com.example.kanpo.service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.example.kanpo.view.KampoProductEditForm;
 import com.example.kanpo.repository.KampoImportRepository;
@@ -24,7 +27,17 @@ public class KampoSearchService {
 		if (!StringUtils.hasText(identificationCode)) {
 			return List.of();
 		}
-		return repository.findProductsByIdentificationCode(identificationCode.trim());
+		List<String> codes = splitIdentificationCodes(identificationCode);
+		if (codes.isEmpty()) {
+			return List.of();
+		}
+		Map<Long, KampoProductView> uniqueProducts = new LinkedHashMap<>();
+		for (String code : codes) {
+			for (KampoProductView product : repository.findProductsByIdentificationCode(code)) {
+				uniqueProducts.putIfAbsent(product.getId(), product);
+			}
+		}
+		return new ArrayList<>(uniqueProducts.values());
 	}
 
 	public List<KampoProductView> searchByIngredientName(String ingredientName) {
@@ -62,5 +75,22 @@ public class KampoSearchService {
 		inputValidator.validateSalesName(form.getSalesName());
 		inputValidator.validateReading(form.getReading());
 		repository.updateProduct(form);
+	}
+
+	private List<String> splitIdentificationCodes(String identificationCode) {
+		String normalized = identificationCode.trim();
+		if (!StringUtils.hasText(normalized)) {
+			return List.of();
+		}
+		List<String> codes = new ArrayList<>();
+		for (String token : normalized.split("[\\s　,、;；]+")) {
+			if (StringUtils.hasText(token)) {
+				codes.add(token.trim());
+			}
+		}
+		if (codes.isEmpty()) {
+			return List.of(normalized);
+		}
+		return codes;
 	}
 }

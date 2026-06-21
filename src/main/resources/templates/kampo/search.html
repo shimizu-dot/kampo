@@ -125,7 +125,7 @@
       margin-top: 16px;
     }
     .pager__info {
-      color: #6b7280;
+      color: var(--app-muted, #6b7280);
       font-size: 13px;
     }
     .pager__nav {
@@ -208,7 +208,8 @@
       </div>
       <div class="field">
         <label for="searchKeyword">検索語</label>
-        <input id="searchKeyword" name="searchKeyword" type="text" th:value="${searchKeyword}" placeholder="例: 5 / ケイヒ / 腹痛" />
+        <input id="searchKeyword" name="searchKeyword" type="text" th:value="${searchKeyword}" placeholder="例: 5, 8, 12 / ケイヒ / 腹痛" />
+        <div class="note" th:if="${searchType == 'IDENTIFICATION_CODE'}">識別コードはカンマ、スペース、改行で複数入力できます。</div>
       </div>
       <button type="submit">実行</button>
     </form>
