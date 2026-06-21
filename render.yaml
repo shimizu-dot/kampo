@@ -1,9 +1,3 @@
-databases:
-  - name: kanpo-db
-    plan: free
-    region: oregon
-    postgresMajorVersion: 16
-
 services:
   - type: web
     name: kanpo
@@ -12,23 +6,13 @@ services:
     region: oregon
     dockerfilePath: ./Dockerfile
     envVars:
-      - key: DB_HOST
-        fromDatabase:
-          name: kanpo-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: kanpo-db
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: kanpo-db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: kanpo-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: kanpo-db
-          property: password
+      # 既存の Postgres (mypostgres) に接続する。値は Render ダッシュボードの
+      # Environment タブで手動設定する (Blueprint には保存されない)。
+      - key: SPRING_DATABASE_URL
+        sync: false
+      - key: SPRING_DATABASE_USERNAME
+        sync: false
+      - key: SPRING_DATABASE_PASSWORD
+        sync: false
+      - key: SPRING_SQL_INIT_MODE
+        sync: false

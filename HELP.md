@@ -107,8 +107,16 @@ psql -h localhost -U postgres -d kanpo -f src/main/resources/schema.sql
 
 ## Render でデプロイする場合
 
-- Render の Web Service では、DB 接続情報を環境変数で渡す
-- まずは `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` を設定する
-- Render 側で JDBC 形式の接続文字列が用意される場合は `JDBC_DATABASE_URL` / `JDBC_DATABASE_USERNAME` / `JDBC_DATABASE_PASSWORD` でも可
-- `spring.sql.init.mode=always` のため、起動時に `src/main/resources/schema.sql` を実行する
+- `render.yaml` は既存の Postgres (例: `mypostgres`) を使う前提で、Web Service の DB 系環境変数を
+  `sync: false` のプレースホルダとして定義している。値は Blueprint には保存されないため、
+  Render ダッシュボードの Web Service > Environment で以下を手動設定する
+  - `SPRING_DATABASE_URL` (例: `jdbc:postgresql://<内部ホスト>:5432/<db名>`)
+  - `SPRING_DATABASE_USERNAME`
+  - `SPRING_DATABASE_PASSWORD`
+  - `SPRING_SQL_INIT_MODE` (通常は `always` でよい)
+- `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` や
+  `JDBC_DATABASE_URL` 系の変数名でも代替可能 (いずれも `application.properties` でフォールバックを用意済み)
+- `spring.sql.init.mode` は既定で `always` のため、起動時に `src/main/resources/schema.sql` を実行する
 - ローカルでは未設定時に `localhost:5432/kanpo` を使う
+- 接続情報 (特にパスワード) は `render.yaml` や git にコミットしないこと。チャットなどに貼った場合は
+  Render ダッシュボードでパスワードをローテーション(再生成)しておくと安全
