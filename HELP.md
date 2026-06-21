@@ -104,3 +104,11 @@ psql -h localhost -U postgres -d kanpo -f src/main/resources/schema.sql
 ## 参考
 
 - テーブル設計の詳細は [docs/kampo_table_design.md](docs/kampo_table_design.md) を参照
+
+## Render でデプロイする場合
+
+- Render の Web Service では、DB 接続情報を環境変数で渡す
+- まずは `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` を設定する
+- Render 側で JDBC 形式の接続文字列が用意される場合は `JDBC_DATABASE_URL` / `JDBC_DATABASE_USERNAME` / `JDBC_DATABASE_PASSWORD` でも可
+- `spring.sql.init.mode=always` のため、起動時に `src/main/resources/schema.sql` を実行する
+- ローカルでは未設定時に `localhost:5432/kanpo` を使う
